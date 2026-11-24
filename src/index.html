@@ -6,101 +6,69 @@
 <title>Strada Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--glass:rgba(255,255,255,.13);--glass2:rgba(255,255,255,.22);--edge:rgba(255,255,255,.28);--ink:#fff;--mute:rgba(255,255,255,.62);--acc:#2fd3c6;--warn:#ff7a66;--gold:#ffc94d}
+:root{--glass:rgba(22,26,38,.42);--edge:rgba(255,255,255,.26);--mute:rgba(255,255,255,.68);--acc:#2fd3c6;--warn:#ff7a66;--gold:#ffc94d}
 *{box-sizing:border-box;min-width:0}
-html,body{margin:0;height:100%;background:transparent;color:var(--ink);font:13px/1.4 Inter,system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
-body.web{background:linear-gradient(135deg,#1b2a4a,#3a2347 55%,#122c33)}
-.frame{position:absolute;inset:0;border-radius:24px;border:1px solid var(--edge);background:rgba(30,34,48,.28);padding:16px;display:grid;grid-template-rows:auto 1fr;gap:14px}
-body.web .frame{inset:20px;backdrop-filter:blur(30px)}
-/* header */
-.top{display:flex;align-items:center;gap:14px}
-.logo{display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:.02em}
-.logo i{width:26px;height:26px;border:2px solid #fff;border-radius:7px;display:grid;place-items:center;font-style:normal;font-size:13px}
-.pill{flex:1;display:flex;align-items:center;gap:4px;background:var(--glass);border:1px solid var(--edge);border-radius:999px;padding:4px}
-.pill button{background:none;border:0;color:#fff;font:600 13px Inter,sans-serif;padding:6px 14px;border-radius:999px;cursor:pointer}
-.pill button.on{background:#fff;color:#2a2d3a}
-.pill .clock{margin-left:auto;padding:0 12px;font-weight:600;font-variant-numeric:tabular-nums}
-.ic{background:var(--glass);border:1px solid var(--edge);color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:14px}
-/* grid */
-.grid{display:grid;grid-template-columns:1fr 1fr 1.25fr 1.25fr;grid-template-rows:1fr 1fr;gap:12px;min-height:0}
-.card{background:var(--glass);border:1px solid var(--edge);border-radius:18px;padding:12px 14px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.card h2{margin:0 0 8px;font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
-.card h2 span{color:var(--mute);font-weight:500}
-.s2{grid-column:span 2}
+html,body{margin:0;background:transparent;color:#fff;font:13px/1.35 Inter,system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;text-shadow:0 1px 3px rgba(0,0,0,.35)}
+body.web{background:linear-gradient(135deg,#1b2a4a,#3a2347 55%,#122c33);min-height:100vh}
+#hub{display:flex;flex-direction:column;gap:8px;padding:6px;width:100%}
+.card{background:var(--glass);border:1px solid var(--edge);border-radius:16px;padding:10px 14px;display:flex;align-items:center;gap:12px;min-height:62px;backdrop-filter:blur(18px)}
 .mute{color:var(--mute);font-size:11.5px}
-.big{font-size:44px;font-weight:600;line-height:1}
-/* weather */
-.wx{display:flex;justify-content:space-between;align-items:flex-start;flex:1}
-.wx svg{width:64px;height:64px}
-/* ring */
-.ring{flex:1;display:grid;place-items:center;position:relative}
-.ring svg{width:112px;height:112px;transform:rotate(-90deg)}
-.ring .v{position:absolute;text-align:center}
-.ring .v b{font-size:24px;display:block}
-.badge{margin-top:6px;text-align:center;font-weight:600;font-size:11.5px;border-radius:8px;padding:4px}
-.badge.w{background:var(--warn)}.badge.o{background:rgba(47,211,198,.25)}
-/* bars */
-.bars{flex:1;display:flex;align-items:flex-end;gap:6px;padding-top:6px}
-.bars div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;font-size:10.5px}
-.bars i{width:100%;max-width:18px;border-radius:6px 6px 3px 3px;background:linear-gradient(var(--gold),#ff9d4d)}
-.bars i.r{background:linear-gradient(#7fc8ff,var(--acc))}
-/* dolar */
-.row{display:flex;justify-content:space-between;padding:4px 0;border-top:1px solid rgba(255,255,255,.12)}
-.row:first-of-type{border-top:0}
-.num{font-variant-numeric:tabular-nums;white-space:nowrap}
-/* news */
-.tabs{display:flex;gap:4px}
-.tabs button{background:var(--glass);border:1px solid var(--edge);color:#fff;border-radius:999px;font:600 10.5px Inter,sans-serif;padding:3px 9px;cursor:pointer}
-.tabs button.on{background:#fff;color:#2a2d3a}
-.list{overflow-y:auto;flex:1;scrollbar-width:none}
-.list::-webkit-scrollbar{display:none}
-.news{display:block;color:#fff;text-decoration:none;padding:6px 0;border-top:1px solid rgba(255,255,255,.12);cursor:pointer}
-.news:first-child{border-top:0}
-.news:hover{color:var(--acc)}
-.posters{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.posters img{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:8px;display:block;background:var(--glass)}
-.cfg{position:absolute;right:16px;top:60px;width:280px;background:rgba(30,34,48,.92);border:1px solid var(--edge);border-radius:16px;padding:14px;display:none;z-index:5}
-.cfg.on{display:block}
-.cfg input{width:100%;margin:6px 0 2px;background:var(--glass);border:1px solid var(--edge);border-radius:8px;color:#fff;padding:7px;font-size:12px;user-select:text}
+.grow{flex:1}
+/* barra superior */
+.top{min-height:40px;padding:6px 8px 6px 12px;cursor:grab}
+.logo{width:24px;height:24px;border:2px solid #fff;border-radius:7px;display:grid;place-items:center;font-weight:700;font-size:12px}
+.ic{background:rgba(255,255,255,.12);border:1px solid var(--edge);color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:13px}
+/* clima */
+.temp{font-size:34px;font-weight:600;line-height:1}
+.wxi{width:44px;height:44px;flex:none}
+/* lluvia */
+.ring{position:relative;width:46px;height:46px;flex:none}
+.ring svg{width:46px;height:46px;transform:rotate(-90deg)}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:11px}
+.bars{display:flex;align-items:flex-end;gap:3px;height:40px;flex:1}
+.bars i{flex:1;border-radius:3px;background:rgba(255,255,255,.35)}
+.bars i.r{background:#7fc8ff}.bars i.s{background:var(--warn)}
+.tag{font-size:10.5px;font-weight:600;border-radius:6px;padding:2px 6px;background:rgba(47,211,198,.3);white-space:nowrap}
+.tag.w{background:var(--warn)}
+/* dólar */
+.usd{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;flex:1;text-align:center}
+.usd b{display:block;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* noticia */
+.news{flex:1;cursor:pointer}
+.news .t{font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.news:hover .t{color:var(--acc)}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav button{background:none;border:0;color:var(--mute);cursor:pointer;font-size:14px;padding:0 4px;height:18px}
+.nav button:hover{color:#fff}
+.poster{width:34px;height:50px;border-radius:5px;object-fit:cover;flex:none}
+.cfg{display:none}.cfg.on{display:flex}
+.cfg input{flex:1;background:rgba(255,255,255,.1);border:1px solid var(--edge);border-radius:8px;color:#fff;padding:6px;font-size:12px;user-select:text}
 </style>
 </head>
 <body>
-<div class="frame">
-  <div class="top" data-tauri-drag-region>
-    <div class="logo" data-tauri-drag-region><i>S</i>STRADA</div>
-    <div class="pill" data-tauri-drag-region>
-      <span id="locs"></span>
-      <span class="clock" id="clock" data-tauri-drag-region></span>
-    </div>
+<div id="hub">
+  <div class="card top" data-tauri-drag-region>
+    <div class="logo" data-tauri-drag-region>S</div>
+    <div class="grow" data-tauri-drag-region><b id="city">Ubicando…</b> <span class="mute" id="clock"></span></div>
     <button class="ic" id="bRef" title="Actualizar">↻</button>
     <button class="ic" id="bCfg" title="Ajustes">⚙</button>
   </div>
-
-  <div class="grid">
-    <section class="card" id="cWx"><h2>Clima <span>…</span></h2></section>
-    <section class="card" id="cRain"><h2>Lluvia próx. 6 h <span></span></h2></section>
-    <section class="card s2" id="cHrs"><h2>Próximas 12 horas <span>temp · lluvia</span></h2><div class="bars" id="bars"></div></section>
-    <section class="card" id="cUsd"><h2>Dólar <span>venta</span></h2></section>
-    <section class="card s2"><h2>Autos <div class="tabs" id="carTabs"></div></h2><div class="list" id="cars"></div></section>
-    <section class="card"><h2>Cine <span id="cineMode"></span></h2><div class="list" id="cine"></div></section>
-  </div>
-
-  <div class="cfg" id="cfg">
-    <b>Ajustes</b>
-    <div class="mute" style="margin-top:8px">Clave TMDB (para cartelera con pósters):</div>
-    <input id="tmdbKey" placeholder="API key v3">
-    <div class="mute">Gratis en themoviedb.org/settings/api</div>
-  </div>
+  <div class="card cfg" id="cfg"><span class="mute">TMDB</span><input id="tmdbKey" placeholder="API key para cartelera con pósters"></div>
+  <div class="card" id="cWx"><span class="mute">Cargando clima…</span></div>
+  <div class="card" id="cRain"><span class="mute">…</span></div>
+  <div class="card" id="cUsd"><span class="mute">Cargando dólar…</span></div>
+  <div class="card" id="cCar"><span class="mute">Cargando noticias de autos…</span></div>
+  <div class="card" id="cCine"><span class="mute">Cargando cine…</span></div>
 </div>
 
 <script>
 {
 const CFG = {
-  locs: { 'Córdoba': [-31.42,-64.18], 'Autódromo': [-31.66,-64.41] },
+  fallback: { city:'Córdoba', lat:-31.42, lon:-64.18 },
   carFeeds: { 'Motor1':'https://ar.motor1.com/rss/news/all/', 'Autoblog':'https://autoblog.com.ar/feed/', 'Parabrisas':'https://parabrisas.perfil.com/feed' },
-  cineFeed: 'https://www.espinof.com/index.xml',
-  dolares: ['oficial','blue','bolsa','contadoconliqui','tarjeta','cripto'],
-  refreshMin: 10
+  cineFeeds: { 'Espinof':'https://www.espinof.com/index.xml' },
+  dolares: { oficial:'Oficial', blue:'Blue', bolsa:'MEP', contadoconliqui:'CCL' },
+  refreshMin: 10, rotateSec: 15
 };
 const T = window.__TAURI__;
 if (!T) document.body.classList.add('web');
@@ -109,93 +77,90 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const store = { get:k=>{try{return localStorage.getItem(k)}catch{return null}}, set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}} };
 const open = url => T?.opener ? T.opener.openUrl(url) : window.open(url,'_blank');
 
+// La ventana se ajusta sola a la altura de las tarjetas
+const fit = () => { if(!T?.window) return; const h=Math.ceil($('#hub').getBoundingClientRect().height);
+  T.window.getCurrentWindow().setSize(new T.dpi.LogicalSize(420, h)).catch(()=>{}); };
+new ResizeObserver(fit).observe($('#hub'));
+
 const WX = {0:'Despejado',1:'Mayormente despejado',2:'Parcialmente nublado',3:'Nublado',45:'Niebla',48:'Niebla',51:'Llovizna',53:'Llovizna',55:'Llovizna',61:'Lluvia débil',63:'Lluvia',65:'Lluvia fuerte',80:'Chaparrones',81:'Chaparrones',82:'Chaparrones fuertes',95:'Tormenta',96:'Tormenta con granizo',99:'Granizo fuerte'};
-const sun = '<circle cx="26" cy="24" r="10" fill="#ffc94d"/><g stroke="#ffc94d" stroke-width="3" stroke-linecap="round"><path d="M26 6v4M26 38v4M8 24h4M40 24h4M13 11l3 3M36 34l3 3M13 37l3-3M36 14l3-3"/></g>';
-const cloud = (c='#fff') => `<path d="M20 52h28a10 10 0 0 0 0-20 14 14 0 0 0-27-3A11 11 0 0 0 20 52z" fill="${c}" opacity=".95"/>`;
-const drops = '<g stroke="#7fc8ff" stroke-width="3" stroke-linecap="round"><path d="M26 56l-3 6M36 56l-3 6M46 56l-3 6"/></g>';
-const bolt = '<path d="M38 50l-6 9h6l-4 9 10-12h-6l4-6z" fill="#ffc94d"/>';
-function icon(c){
-  const body = c<=1 ? sun : c<=2 ? sun+cloud() : c<=48 ? cloud('#dfe6ee') : c<95 ? cloud('#dfe6ee')+drops : cloud('#c9d2de')+bolt;
-  return `<svg viewBox="0 0 70 70">${body}</svg>`;
+const sun='<circle cx="26" cy="24" r="10" fill="#ffc94d"/><g stroke="#ffc94d" stroke-width="3" stroke-linecap="round"><path d="M26 6v4M26 38v4M8 24h4M40 24h4M13 11l3 3M36 34l3 3M13 37l3-3M36 14l3-3"/></g>';
+const cloud=(c='#fff')=>`<path d="M20 52h28a10 10 0 0 0 0-20 14 14 0 0 0-27-3A11 11 0 0 0 20 52z" fill="${c}"/>`;
+const drops='<g stroke="#7fc8ff" stroke-width="3" stroke-linecap="round"><path d="M26 56l-3 6M36 56l-3 6M46 56l-3 6"/></g>';
+const bolt='<path d="M38 50l-6 9h6l-4 9 10-12h-6l4-6z" fill="#ffc94d"/>';
+const icon=c=>`<svg class="wxi" viewBox="0 0 70 70">${c<=1?sun:c<=2?sun+cloud():c<=48?cloud('#dfe6ee'):c<95?cloud('#dfe6ee')+drops:cloud('#c9d2de')+bolt}</svg>`;
+
+// Ubicación por IP (sin pedir permisos)
+let place = null;
+async function locate(){
+  try{
+    const d=await (await fetch('https://get.geojs.io/v1/ip/geo.json')).json();
+    place={ city:d.city||d.region||'Tu ubicación', lat:+d.latitude, lon:+d.longitude };
+  }catch(e){ place=CFG.fallback; }
+  $('#city').textContent=place.city;
 }
 
-let loc = store.get('loc') || 'Córdoba';
-function locTabs(){ $('#locs').innerHTML = Object.keys(CFG.locs).map(k=>`<button data-l="${esc(k)}" class="${k===loc?'on':''}">${esc(k)}</button>`).join(''); }
-
 async function weather(){
-  locTabs();
-  const [la,lo] = CFG.locs[loc];
-  const u=`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&hourly=temperature_2m,precipitation_probability,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=America/Argentina/Cordoba&forecast_hours=12`;
+  if(!place) await locate();
+  const u=`https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&hourly=temperature_2m,precipitation_probability,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_hours=12`;
   try{
     const d=await (await fetch(u)).json(), c=d.current, h=d.hourly;
-    $('#cWx').innerHTML=`<h2>Clima <span>${esc(loc)}</span></h2>
-      <div class="wx"><div><div class="big">${Math.round(c.temperature_2m)}°</div>
-      <div style="margin-top:6px;font-weight:600">${esc(WX[c.weather_code]||'—')}</div>
-      <div class="mute">Máx ${Math.round(d.daily.temperature_2m_max[0])}° · Mín ${Math.round(d.daily.temperature_2m_min[0])}°</div></div>${icon(c.weather_code)}</div>
-      <div class="mute">ST ${Math.round(c.apparent_temperature)}° · Hum ${c.relative_humidity_2m}% · ${Math.round(c.wind_speed_10m)} km/h</div>`;
-    // ring
-    const p6=h.precipitation_probability.slice(0,6), codes=h.weather_code.slice(0,6), mx=Math.max(...p6);
-    const hail=codes.some(x=>x>=96), storm=codes.some(x=>x>=95), C=2*Math.PI*46;
-    const col = hail||storm ? 'var(--warn)' : mx>=50 ? '#7fc8ff' : 'var(--acc)';
-    const msg = hail?'⚠ Granizo probable':storm?'⚠ Tormenta':mx>=70?'Lluvia probable':'Sin alertas';
-    $('#cRain').innerHTML=`<h2>Lluvia próx. 6 h <span>${esc(loc)}</span></h2>
-      <div class="ring"><svg viewBox="0 0 112 112"><circle cx="56" cy="56" r="46" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="10"/>
-      <circle cx="56" cy="56" r="46" fill="none" stroke="${col}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C*mx/100} ${C}"/></svg>
-      <div class="v"><b>${mx}%</b><span class="mute">máx.</span></div></div>
-      <div class="badge ${hail||storm||mx>=70?'w':'o'}">${msg}</div>`;
-    // bars
-    const tmin=Math.min(...h.temperature_2m), tmax=Math.max(...h.temperature_2m), rng=Math.max(tmax-tmin,1);
-    $('#bars').innerHTML=h.time.map((t,i)=>{
-      const pct=30+70*(h.temperature_2m[i]-tmin)/rng, rain=h.precipitation_probability[i]>=50;
-      return `<div><b>${Math.round(h.temperature_2m[i])}°</b><i class="${rain?'r':''}" style="height:${pct}%"></i><span class="mute">${t.slice(11,13)}h</span></div>`;
-    }).join('');
-  }catch(e){ $('#cWx').innerHTML='<h2>Clima</h2><div class="mute">Sin conexión</div>'; }
+    $('#cWx').innerHTML=`${icon(c.weather_code)}<div class="temp">${Math.round(c.temperature_2m)}°</div>
+      <div class="grow"><b>${esc(WX[c.weather_code]||'—')}</b><div class="mute">ST ${Math.round(c.apparent_temperature)}° · Hum ${c.relative_humidity_2m}% · ${Math.round(c.wind_speed_10m)} km/h</div></div>
+      <div class="mute" style="text-align:right">↑ ${Math.round(d.daily.temperature_2m_max[0])}°<br>↓ ${Math.round(d.daily.temperature_2m_min[0])}°</div>`;
+    const p6=h.precipitation_probability.slice(0,6), cd=h.weather_code.slice(0,6), mx=Math.max(...p6);
+    const hail=cd.some(x=>x>=96), storm=cd.some(x=>x>=95), C=2*Math.PI*18;
+    const bad=hail||storm||mx>=70, col=hail||storm?'var(--warn)':mx>=50?'#7fc8ff':'var(--acc)';
+    const msg=hail?'⚠ Granizo':storm?'⚠ Tormenta':mx>=70?'Lluvia probable':'Sin alertas';
+    $('#cRain').innerHTML=`<div class="ring"><svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="18" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="5"/><circle cx="23" cy="23" r="18" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C*mx/100} ${C}"/></svg><b>${mx}%</b></div>
+      <div><span class="tag ${bad?'w':''}">${msg}</span><div class="mute" style="margin-top:4px">lluvia · 12 h</div></div>
+      <div class="bars" title="Probabilidad de lluvia por hora">${h.precipitation_probability.map((p,i)=>`<i class="${h.weather_code[i]>=95?'s':p>=50?'r':''}" style="height:${Math.max(p,6)}%" title="${h.time[i].slice(11,16)} · ${p}%"></i>`).join('')}</div>`;
+  }catch(e){ $('#cWx').innerHTML='<span class="mute">Sin conexión con el clima</span>'; }
 }
 
 async function dolar(){
   try{
     const d=await (await fetch('https://dolarapi.com/v1/dolares')).json();
     const f=n=>n==null?'—':'$'+Math.round(n).toLocaleString('es-AR');
-    const list=d.filter(x=>CFG.dolares.includes(x.casa));
-    $('#cUsd').innerHTML=`<h2>Dólar <span>venta</span></h2><div class="list">${list.map(x=>`<div class="row"><span>${esc(x.nombre)}</span><b class="num">${f(x.venta)}</b></div>`).join('')}</div>`;
-  }catch(e){ $('#cUsd').innerHTML='<h2>Dólar</h2><div class="mute">Sin conexión</div>'; }
+    $('#cUsd').innerHTML=`<span class="mute" style="writing-mode:vertical-rl;transform:rotate(180deg)">US$</span><div class="usd">${Object.entries(CFG.dolares).map(([k,n])=>{const x=d.find(y=>y.casa===k);return `<div><span class="mute">${n}</span><b>${f(x?.venta)}</b></div>`}).join('')}</div>`;
+  }catch(e){ $('#cUsd').innerHTML='<span class="mute">Sin conexión con DolarApi</span>'; }
 }
 
-async function rss(url){
+// Noticias: una por tarjeta, rotan solas
+async function rss(src,url){
   const d=await (await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(url))).json();
-  if(d.status!=='ok') throw 0; return d.items;
+  if(d.status!=='ok') return [];
+  return d.items.map(i=>({src,title:i.title,link:i.link,date:new Date(i.pubDate.replace(' ','T')+'Z')}));
 }
-const ago = s => { const m=Math.round((Date.now()-new Date(s.replace(' ','T')+'Z'))/6e4); return m<60?`${m} min`:m<1440?`${Math.round(m/60)} h`:`${Math.round(m/1440)} d`; };
-const newsList = items => items.slice(0,8).map(i=>`<a class="news" data-u="${esc(i.link)}">${esc(i.title)}<div class="mute">hace ${ago(i.pubDate)}</div></a>`).join('');
-
-let carSrc = store.get('carSrc') || 'Motor1';
-async function cars(){
-  $('#carTabs').innerHTML=Object.keys(CFG.carFeeds).map(k=>`<button data-k="${esc(k)}" class="${k===carSrc?'on':''}">${esc(k)}</button>`).join('');
-  try{ $('#cars').innerHTML=newsList(await rss(CFG.carFeeds[carSrc])); }
-  catch(e){ $('#cars').innerHTML='<span class="mute">No se pudo leer el feed</span>'; }
+const ago=d=>{const m=Math.round((Date.now()-d)/6e4);return m<60?`${m} min`:m<1440?`${Math.round(m/60)} h`:`${Math.round(m/1440)} d`};
+const feeds={car:{items:[],i:0,el:'#cCar',label:'Autos'},cine:{items:[],i:0,el:'#cCine',label:'Cine'}};
+function show(k){
+  const f=feeds[k], n=f.items[f.i]; if(!n){ $(f.el).innerHTML=`<span class="mute">${f.label}: sin noticias</span>`; return; }
+  $(f.el).innerHTML=`${n.img?`<img class="poster" src="${esc(n.img)}" alt="">`:''}
+    <div class="news" data-u="${esc(n.link)}"><div class="mute"><b style="color:#fff">${f.label}</b> · ${esc(n.src)}${n.date?' · hace '+ago(n.date):''} · ${f.i+1}/${f.items.length}</div><div class="t">${esc(n.title)}</div></div>
+    <div class="nav"><button data-k="${k}" data-d="-1">‹</button><button data-k="${k}" data-d="1">›</button></div>`;
 }
-
+async function loadFeed(k,map){
+  const all=(await Promise.all(Object.entries(map).map(([s,u])=>rss(s,u).catch(()=>[])))).flat().sort((a,b)=>b.date-a.date);
+  feeds[k].items=all.slice(0,15); feeds[k].i=0; show(k);
+}
 async function cine(){
   const key=store.get('tmdb');
   if(key){ try{
     const d=await (await fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=${encodeURIComponent(key)}&language=es-AR&region=AR`)).json();
-    $('#cineMode').textContent='en cartelera';
-    $('#cine').innerHTML=`<div class="posters">${d.results.slice(0,9).map(m=>`<a class="news" style="border:0;padding:0" data-u="https://www.themoviedb.org/movie/${+m.id}" title="${esc(m.title)}"><img src="https://image.tmdb.org/t/p/w185${esc(m.poster_path)}" alt=""></a>`).join('')}</div>`;
-    return; }catch(e){} }
-  $('#cineMode').textContent='noticias';
-  try{ $('#cine').innerHTML=newsList(await rss(CFG.cineFeed)); }
-  catch(e){ $('#cine').innerHTML='<span class="mute">No se pudo leer el feed</span>'; }
+    feeds.cine.items=d.results.slice(0,15).map(m=>({src:'En cartelera',title:m.title,link:`https://www.themoviedb.org/movie/${+m.id}`,img:m.poster_path?`https://image.tmdb.org/t/p/w92${m.poster_path}`:''}));
+    feeds.cine.i=0; show('cine'); return; }catch(e){} }
+  loadFeed('cine',CFG.cineFeeds);
 }
+setInterval(()=>{for(const k in feeds){const f=feeds[k]; if(f.items.length){f.i=(f.i+1)%f.items.length; show(k);}}}, CFG.rotateSec*1e3);
 
-const tick=()=>{$('#clock').textContent=new Date().toLocaleString('es-AR',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})};
-const all=()=>{weather();dolar();cars();cine()};
+const tick=()=>{$('#clock').textContent=new Date().toLocaleString('es-AR',{weekday:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})};
+const all=()=>{weather();dolar();loadFeed('car',CFG.carFeeds);cine()};
 
 document.addEventListener('click',e=>{
-  const a=e.target.closest('[data-u]'); if(a){ open(a.dataset.u); return; }
-  const l=e.target.closest('[data-l]'); if(l){ loc=l.dataset.l; store.set('loc',loc); weather(); return; }
-  const k=e.target.closest('[data-k]'); if(k){ carSrc=k.dataset.k; store.set('carSrc',carSrc); cars(); return; }
+  const n=e.target.closest('[data-d]'); if(n){const f=feeds[n.dataset.k]; if(f.items.length){f.i=(f.i+ +n.dataset.d+f.items.length)%f.items.length; show(n.dataset.k);} return;}
+  const a=e.target.closest('[data-u]'); if(a) open(a.dataset.u);
 });
-$('#bRef').onclick=all;
+$('#bRef').onclick=()=>{place=null;all()};
 $('#bCfg').onclick=()=>$('#cfg').classList.toggle('on');
 $('#tmdbKey').value=store.get('tmdb')||'';
 $('#tmdbKey').addEventListener('change',e=>{store.set('tmdb',e.target.value.trim());cine()});
