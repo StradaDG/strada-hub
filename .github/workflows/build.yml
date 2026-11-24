@@ -1,4 +1,4 @@
-name: Build instaladores
+name: Build Windows portable
 on:
   push:
     branches: [main]
@@ -8,35 +8,27 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: macos-latest
-            args: --target universal-apple-darwin
-          - platform: windows-latest
-            args: ''
-    runs-on: ${{ matrix.platform }}
+  windows-portable:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
       - run: npm install
-      - uses: tauri-apps/tauri-action@v0
+      - run: npx tauri build --no-bundle
+      - name: Publicar en release "portable"
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: v__VERSION__
-          releaseName: 'Strada Hub v__VERSION__'
-          releaseBody: 'Descargá el .dmg (Mac) o el -setup.exe (Windows).'
-          releaseDraft: false
-          prerelease: false
-          args: ${{ matrix.args }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp src-tauri/target/release/strada-hub.exe Strada-Hub-portable.exe
+          gh release view portable >/dev/null 2>&1 || gh release create portable --title "Strada Hub portable (Windows)" --notes "Se actualiza solo con cada cambio. Bajá Strada-Hub-portable.exe y abrilo, no se instala." --prerelease
+          gh release upload portable Strada-Hub-portable.exe --clobber
+          gh release edit portable --notes "Última versión: ${GITHUB_SHA::7} · $(date -u '+%Y-%m-%d %H:%M UTC'). Bajá Strada-Hub-portable.exe y abrilo, no se instala."
+
+# Mac: se reactiva cuando la versión de Windows esté final.
