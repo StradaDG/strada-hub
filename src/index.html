@@ -61,6 +61,7 @@ body.web #hub{width:340px}
 .nc .t{font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:1px}
 .nc:hover .t{color:var(--acc)}
 .nc .k{font-weight:700;color:var(--ink)}
+.pf{display:inline-block;color:#fff;border-radius:5px;padding:0 6px;margin-right:5px;font-size:11px;font-weight:700;text-shadow:none;vertical-align:1px}
 .nc.new{animation:up .6s cubic-bezier(.2,.8,.2,1)}
 @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.nc.new{animation:none}#feed{scroll-behavior:auto}}
@@ -110,6 +111,8 @@ body.light .hn{color:#6b4fd8}
     <div class="seg"><button class="chip" data-th="dark">Oscuro</button><button class="chip" data-th="light">Blanco</button></div>
     <h3>Transparencia</h3>
     <input type="range" id="alpha" min="0" max="90" step="1">
+    <h3>Noticias</h3>
+    <div class="seg"><button class="chip" data-as="1">Se deslizan solas</button><button class="chip" data-as="0">Quietas</button></div>
     <h3>Noticias visibles <span id="nVal"></span></h3>
     <input type="range" id="nVis" min="2" max="8" step="1">
     <h3>Mostrar</h3>
@@ -141,20 +144,33 @@ body.light .hn{color:#6b4fd8}
 
 <script>
 {
+const gn = q => 'https://news.google.com/rss/search?q='+encodeURIComponent(q+' when:3d')+'&hl=es-419&gl=AR&ceid=AR:es-419';
 const DEFAULT_FEEDS = [
   {cat:'Autos', name:'Motor1', url:'https://ar.motor1.com/rss/news/all/'},
   {cat:'Autos', name:'Autoblog', url:'https://autoblog.com.ar/feed/'},
   {cat:'Autos', name:'Parabrisas', url:'https://parabrisas.perfil.com/feed'},
   {cat:'Motorsport', name:'Motorsport.com', url:'https://es.motorsport.com/rss/all/news/'},
-  {cat:'Noticias', name:'La Voz', url:'https://www.lavoz.com.ar/arc/outboundfeeds/feeds/rss/?outputType=xml'},
-  {cat:'Noticias', name:'Infobae', url:'https://www.infobae.com/arc/outboundfeeds/rss/'},
+  {cat:'F1', name:'Google Noticias', url:gn('"Fórmula 1" OR F1 OR Colapinto')},
+  {cat:'NBA', name:'Google Noticias', url:gn('NBA básquet')},
+  {cat:'Atenas', name:'Google Noticias', url:gn('"Atenas de Córdoba" OR "Atenas" básquet Liga Nacional')},
+  {cat:'Fútbol Córdoba', name:'Google Noticias', url:gn('Belgrano OR Talleres OR Instituto fútbol Córdoba')},
+  {cat:'Inter Miami', name:'Google Noticias', url:gn('"Inter Miami"')},
+  {cat:'Córdoba', name:'La Voz', url:'https://www.lavoz.com.ar/arc/outboundfeeds/feeds/rss/?outputType=xml'},
+  {cat:'Córdoba', name:'Diarios locales', url:gn('Córdoba (site:lavoz.com.ar OR site:eldoce.tv OR site:cadena3.com OR site:lmdiario.com.ar OR site:perfil.com OR site:telefenoticias.com.ar)')},
+  {cat:'Series', name:'Google Noticias', url:gn('serie estreno (Netflix OR "Prime Video" OR "Disney+" OR Max OR "Apple TV+" OR "Paramount+")')},
   {cat:'Cine', name:'Espinof', url:'https://www.espinof.com/index.xml'}
+];
+const OLD_DEFAULT_URLS = ['https://ar.motor1.com/rss/news/all/','https://autoblog.com.ar/feed/','https://parabrisas.perfil.com/feed','https://es.motorsport.com/rss/all/news/','https://www.lavoz.com.ar/arc/outboundfeeds/feeds/rss/?outputType=xml','https://www.infobae.com/arc/outboundfeeds/rss/','https://www.espinof.com/index.xml'];
+const PLATFORMS = [
+  [/netflix/i,'Netflix','#e50914'], [/prime video|amazon prime/i,'Prime Video','#00a8e1'], [/disney\s?(\+|plus)/i,'Disney+','#113ccf'],
+  [/hbo max|\bmax\b|\bhbo\b/i,'Max','#5b2bd8'], [/apple tv/i,'Apple TV+','#555'], [/paramount/i,'Paramount+','#0064ff'],
+  [/star\s?\+/i,'Star+','#c2185b'], [/\bflow\b/i,'Flow','#00a19a'], [/crunchyroll/i,'Crunchyroll','#f47521'], [/movistar/i,'Movistar','#019df4']
 ];
 const FALLBACK = { city:'Córdoba', lat:-31.42, lon:-64.18 };
 const RM = 'https://raw.githubusercontent.com/StradaDG/rain-meter/main/';   // datos de Rain Meter
 const CBA = { lat:-31.420, lon:-64.189 };
 const DOLARES = { oficial:'Oficial', blue:'Blue', bolsa:'MEP', contadoconliqui:'CCL' };
-const WIDTH = 340, KEEP = 40, NEWS_MIN = 5, WX_MIN = 10;
+const WIDTH = 340, KEEP = 80, PER_FEED = 15, NEWS_MIN = 3, WX_MIN = 10, SLIDE_SEC = 6;
 
 const T = window.__TAURI__;
 if (!T) document.body.classList.add('web');
@@ -164,6 +180,10 @@ const store = { get:(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d
 const open = url => T?.opener ? T.opener.openUrl(url) : window.open(url,'_blank');
 
 let feedsCfg = store.get('feeds', DEFAULT_FEEDS);
+if(store.get('feedsVer',1) < 2){   // suma las fuentes nuevas y conserva las que agregó el usuario
+  feedsCfg = DEFAULT_FEEDS.concat(feedsCfg.filter(f=>!OLD_DEFAULT_URLS.includes(f.url)));
+  store.set('feeds',feedsCfg); store.set('feedsVer',2);
+}
 let hidden = store.get('hidden', []);
 
 // ventana: ancho fijo, alto según tarjetas
@@ -246,6 +266,8 @@ function pickCity(i){
   place=null; weather();
 }
 
+function setAS(on){ store.set('autoSlide',on); document.querySelectorAll('[data-as]').forEach(b=>b.classList.toggle('on',(b.dataset.as==='1')===on)); }
+
 // estilo oscuro / blanco
 function setTheme(t){ document.body.classList.toggle('light', t==='light'); store.set('theme',t);
   document.querySelectorAll('[data-th]').forEach(b=>b.classList.toggle('on', b.dataset.th===t)); }
@@ -309,13 +331,32 @@ async function dolar(){
 let items = [];                 // ordenadas de vieja a nueva
 const seen = new Set();
 const cats = () => [...new Set(feedsCfg.map(f=>f.cat))];
+// En la app: lectura directa del RSS (sin límites). En el navegador: vía rss2json.
 async function rss(f){
-  const d=await (await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(f.url))).json();
-  if(d.status!=='ok') throw new Error('feed');
-  return d.items.map(i=>({cat:f.cat,src:f.name,title:i.title,link:i.link,date:Date.parse(String(i.pubDate).replace(' ','T')+'Z')||Date.now()}));
+  let list=[];
+  if(T?.http){
+    const r=await T.http.fetch(f.url,{headers:{'User-Agent':'Mozilla/5.0 StradaHub'}});
+    if(!r.ok) throw new Error('feed');
+    const x=new DOMParser().parseFromString(await r.text(),'text/xml');
+    const nodes=[...x.querySelectorAll('item, entry')];
+    if(!nodes.length) throw new Error('feed');
+    const tx=(n,sel)=>n.querySelector(sel)?.textContent?.trim()||'';
+    list=nodes.map(n=>({title:tx(n,'title'), link:tx(n,'link')||n.querySelector('link')?.getAttribute('href')||'',
+      date:Date.parse(tx(n,'pubDate')||tx(n,'published')||tx(n,'updated'))||Date.now(), source:tx(n,'source')}));
+  }else{
+    const d=await (await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(f.url))).json();
+    if(d.status!=='ok') throw new Error('feed');
+    list=d.items.map(i=>({title:i.title,link:i.link,date:Date.parse(String(i.pubDate).replace(' ','T')+'Z')||Date.now(),source:''}));
+  }
+  return list.sort((a,b)=>b.date-a.date).slice(0,PER_FEED).map(i=>{
+    let title=i.title, src=f.name;
+    if(/news\.google\./.test(f.url)){ const m=title.match(/^(.*) - ([^-]+)$/); if(m){ title=m[1]; src=m[2].trim(); } else if(i.source) src=i.source; }
+    const pf = f.cat==='Series' ? PLATFORMS.find(p=>p[0].test(title)) : null;
+    return {cat:f.cat, src, title, link:i.link, date:i.date, pf: pf?[pf[1],pf[2]]:null};
+  });
 }
 const ago=d=>{const m=Math.max(0,Math.round((Date.now()-d)/6e4));return m<60?`${m} min`:m<1440?`${Math.round(m/60)} h`:`${Math.round(m/1440)} d`};
-const card=(n,isNew)=>`<a class="card nc${isNew?' new':''}" data-u="${esc(n.link)}"><div class="mute"><span class="k">${esc(n.cat)}</span> · ${esc(n.src)} · hace ${ago(n.date)}</div><div class="t">${esc(n.title)}</div></a>`;
+const card=(n,isNew)=>`<a class="card nc${isNew?' new':''}" data-u="${esc(n.link)}"><div class="mute"><span class="k">${esc(n.cat)}</span> · ${esc(n.src)} · hace ${ago(n.date)}</div><div class="t">${n.pf?`<span class="pf" style="background:${n.pf[1]}">${esc(n.pf[0])}</span>`:''}${esc(n.title)}</div></a>`;
 const atBottom = () => { const f=$('#feed'); return f.scrollHeight-f.scrollTop-f.clientHeight < 8; };
 function toBottom(smooth=true){ const f=$('#feed'); f.style.scrollBehavior=smooth?'':'auto'; f.scrollTop=f.scrollHeight; f.style.scrollBehavior=''; arrows(); }
 function arrows(){ const f=$('#feed'); $('#up').classList.toggle('on', f.scrollTop>4); $('#down').classList.toggle('on', !atBottom()); }
@@ -337,10 +378,23 @@ async function loadNews(reset=false){
   else $('#down').innerHTML='▼<span class="dot"></span>';      // hay nuevas abajo
   arrows();
 }
-const step = () => $('#feed').clientHeight / +getComputedStyle(document.documentElement).getPropertyValue('--n') ;
-$('#up').onclick = () => { $('#feed').scrollBy({top:-step()}); };
-$('#down').onclick = () => { toBottom(); $('#down').textContent='▼'; };
+const step = () => { const c=$('#feed .nc'); return c ? c.offsetHeight + 7 : 71; };
+let pauseUntil = 0, endWait = 0;
+const pause = (sec=20) => { pauseUntil = Date.now() + sec*1e3; };
+$('#up').onclick = () => { pause(); $('#feed').scrollBy({top:-step()}); };
+$('#down').onclick = () => { pause(); toBottom(); $('#down').textContent='▼'; };
 $('#feed').addEventListener('scroll', () => { arrows(); if(atBottom()) $('#down').textContent='▼'; });
+$('#feed').addEventListener('mouseenter', () => pause(3600));
+$('#feed').addEventListener('mouseleave', () => pause(4));
+$('#feed').addEventListener('wheel', () => pause(), {passive:true});
+// deslizado automático: baja de a una tarjeta hasta las más nuevas y vuelve a empezar
+function autoSlide(){
+  if(!store.get('autoSlide',true) || Date.now()<pauseUntil) return;
+  const f=$('#feed');
+  if(atBottom()){ if(++endWait>=3){ endWait=0; f.scrollTo({top:0}); } }
+  else { endWait=0; f.scrollBy({top:step()}); }
+}
+setInterval(autoSlide, SLIDE_SEC*1e3);
 
 // opciones
 function applyHidden(){
@@ -369,6 +423,7 @@ $('#bCfg').onclick = () => { $('#cfg').hidden = !$('#cfg').hidden; };
 
 document.addEventListener('click',e=>{
   const pk=e.target.closest('[data-pick]'); if(pk){ pickCity(+pk.dataset.pick); return; }
+  const as=e.target.closest('[data-as]'); if(as){ setAS(as.dataset.as==='1'); return; }
   const th=e.target.closest('[data-th]'); if(th){ setTheme(th.dataset.th); return; }
   const t=e.target.closest('[data-t]'); if(t){const k=t.dataset.t; hidden=hidden.includes(k)?hidden.filter(x=>x!==k):[...hidden,k]; store.set('hidden',hidden); applyHidden(); render(); toBottom(false); return;}
   const r=e.target.closest('[data-rm]'); if(r){feedsCfg.splice(+r.dataset.rm,1); saveFeeds(); return;}
@@ -378,7 +433,7 @@ document.addEventListener('click',e=>{
 const tick=()=>{$('#clock').textContent=new Date().toLocaleString('es-AR',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})};
 $('#bRef').onclick=()=>{place=null;weather();dolar();loadNews()};
 
-setAlpha($('#alpha').value); setN($('#nVis').value); setTheme(store.get('theme','dark')); setLock(store.get('locked',false));
+setAlpha($('#alpha').value); setN($('#nVis').value); setTheme(store.get('theme','dark')); setAS(store.get('autoSlide',true)); setLock(store.get('locked',false));
 renderSources(); applyHidden();
 tick(); setInterval(tick,30e3);
 weather(); dolar(); loadNews();
