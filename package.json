@@ -1,7 +1,7 @@
 {
   "name": "strada-hub",
   "private": true,
-  "version": "0.8.0",
+  "version": "0.9.0",
   "type": "module",
   "scripts": {
     "tauri": "tauri"
@@ -10,6 +10,7 @@
     "@tauri-apps/cli": "^2"
   },
   "dependencies": {
+    "@tauri-apps/plugin-autostart": "^2.7.0",
     "@tauri-apps/plugin-http": "^2.9.0"
   }
 }

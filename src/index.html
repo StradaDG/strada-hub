@@ -60,12 +60,16 @@ body.web #hub{width:340px}
 .days svg{width:18px;height:18px;flex:none;grid-row:span 2}
 .days b{font-size:11px;line-height:1.1}
 /* resultados */
-.sp{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px 4px;padding:8px;text-align:center}
-.sp .tile{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0;cursor:default}
+.sp{padding:0;min-height:40px;overflow:hidden;display:block;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.sp .rail{display:flex;width:max-content;animation:tick var(--dur,40s) linear infinite}
+.sp:hover .rail{animation-play-state:paused}
+@keyframes tick{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+@media (prefers-reduced-motion:reduce){.sp .rail{animation-duration:200s}}
+.sp .tile{display:flex;align-items:center;gap:6px;padding:11px 14px;white-space:nowrap;cursor:default;border-right:1px solid var(--soft)}
 .sp svg{width:16px;height:16px;color:var(--ink);opacity:.95}
 .sp .nm{font-size:9.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.sp .sc{font-size:14px;line-height:1.15;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.sp .tm{font-size:9.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.sp .sc{font-size:13px;line-height:1;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.sp .tm{font-size:10.5px;font-weight:600;color:var(--mute);white-space:nowrap}
 .sp .dt{font-size:9px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .live{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--red);margin-right:3px;vertical-align:1px;animation:bl 1.2s infinite}
 @keyframes bl{50%{opacity:.25}}
@@ -134,6 +138,8 @@ body.light .hn{color:#6b4fd8}
     <h3>Ubicación</h3>
     <div class="seg"><button class="chip" id="locAuto">Automática</button><button class="chip" id="locMan">Elegir ciudad</button></div>
     <div id="locBox" hidden><div class="row2"><input id="locQ" placeholder="Escribí una ciudad"><button class="btn" id="locGo">Buscar</button></div><div class="res" id="locRes"></div></div>
+    <h3>Arrancar con la computadora</h3>
+    <div class="seg"><button class="chip" data-auto="1">Sí</button><button class="chip" data-auto="0">No</button></div>
     <h3>Estilo</h3>
     <div class="seg"><button class="chip" data-th="dark">Oscuro</button><button class="chip" data-th="light">Blanco</button></div>
     <h3>Transparencia</h3>
@@ -298,6 +304,15 @@ function pickCity(i){
 
 function setAS(on){ store.set('autoSlide',on); document.querySelectorAll('[data-as]').forEach(b=>b.classList.toggle('on',(b.dataset.as==='1')===on)); }
 
+// arranque automático con Windows/Mac
+const showAuto = on => document.querySelectorAll('[data-auto]').forEach(b=>b.classList.toggle('on',(b.dataset.auto==='1')===on));
+async function setAuto(on){
+  if(!T?.autostart){ showAuto(false); return; }
+  try{ on ? await T.autostart.enable() : await T.autostart.disable(); }catch(e){}
+  showAuto(await T.autostart.isEnabled().catch(()=>false));
+}
+if(T?.autostart) T.autostart.isEnabled().then(showAuto).catch(()=>showAuto(false)); else showAuto(false);
+
 // estilo oscuro / blanco
 function setTheme(t){ document.body.classList.toggle('light', t==='light'); store.set('theme',t);
   document.querySelectorAll('[data-th]').forEach(b=>b.classList.toggle('on', b.dataset.th===t)); }
@@ -429,10 +444,11 @@ const tile=(s,r)=>`<div class="tile" title="${esc(s.nm+(r?.dt?' · '+r.dt:''))}"
 let spRes=[];
 async function sports(){
   spRes=await Promise.all(SPORTS.map(s=>s.fn().catch(()=>null)));
-  $('#c-dep').innerHTML=SPORTS.map((s,i)=>tile(s,spRes[i])).join('');
+  const row=SPORTS.map((s,i)=>tile(s,spRes[i])).join('');
+  $('#c-dep').innerHTML=`<div class="rail" style="--dur:${SPORTS.length*6}s">${row}${row}</div>`;
 }
 // NBA: rota entre los partidos de la fecha
-setInterval(()=>{ if(nbaGames.length>1){ nbaI=(nbaI+1)%nbaGames.length; spRes[1]=nbaGames[nbaI]; const el=$('#c-dep .tile:nth-child(2)'); if(el) el.outerHTML=tile(SPORTS[1],spRes[1]); } }, 5e3);
+setInterval(()=>{ if(nbaGames.length>1){ nbaI=(nbaI+1)%nbaGames.length; spRes[1]=nbaGames[nbaI]; document.querySelectorAll('#c-dep .tile:nth-child(7n+2)').forEach(el=>el.outerHTML=tile(SPORTS[1],spRes[1])); } }, 5e3);
 
 /* ===== Feed: una noticia por tarjeta, viejas arriba, nuevas abajo ===== */
 let items = [];                 // ordenadas de vieja a nueva
@@ -542,6 +558,7 @@ $('#bCfg').onclick = () => { $('#cfg').hidden = !$('#cfg').hidden; };
 
 document.addEventListener('click',e=>{
   const pk=e.target.closest('[data-pick]'); if(pk){ pickCity(+pk.dataset.pick); return; }
+  const au=e.target.closest('[data-auto]'); if(au){ setAuto(au.dataset.auto==='1'); return; }
   const as=e.target.closest('[data-as]'); if(as){ setAS(as.dataset.as==='1'); return; }
   const th=e.target.closest('[data-th]'); if(th){ setTheme(th.dataset.th); return; }
   const t=e.target.closest('[data-t]'); if(t){const k=t.dataset.t; hidden=hidden.includes(k)?hidden.filter(x=>x!==k):[...hidden,k]; store.set('hidden',hidden); applyHidden(); render(); toBottom(false); return;}
