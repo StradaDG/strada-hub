@@ -60,11 +60,11 @@ body.web #hub{width:340px}
 .days svg{width:18px;height:18px;flex:none;grid-row:span 2}
 .days b{font-size:11px;line-height:1.1}
 /* resultados */
-.sp{padding:0;min-height:40px;overflow:hidden;display:block;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
-.sp .rail{display:flex;width:max-content;animation:tick var(--dur,40s) linear infinite}
-.sp:hover .rail{animation-play-state:paused}
-@keyframes tick{from{transform:translateX(-50%)}to{transform:translateX(0)}}
-@media (prefers-reduced-motion:reduce){.sp .rail{animation-duration:200s}}
+.sp{padding:0 2px;min-height:40px;gap:0}
+.sp .vp{flex:1;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.sp .rail{display:flex;width:max-content;will-change:transform}
+.sp .nav2{background:none;border:0;color:var(--mute);cursor:pointer;font-size:15px;width:22px;height:38px;padding:0;flex:none}
+.sp .nav2:hover{color:var(--ink)}
 .sp .tile{display:flex;align-items:center;gap:6px;padding:11px 14px;white-space:nowrap;cursor:default;border-right:1px solid var(--soft)}
 .sp svg{width:16px;height:16px;color:var(--ink);opacity:.95}
 .sp .nm{font-size:9.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -94,7 +94,7 @@ body.light .nc::before{filter:brightness(.8) saturate(1.3)}
 .cdot{display:inline-block;width:2px;height:11px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 .pf{display:inline-block;color:#fff;border-radius:5px;padding:0 6px;margin-right:5px;font-size:11px;font-weight:700;text-shadow:none;vertical-align:1px}
 .nc.new{animation:up .6s cubic-bezier(.2,.8,.2,1)}
-@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes up{from{transform:translateY(-30px);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.nc.new{animation:none}#feed{scroll-behavior:auto}}
 /* opciones */
 .set{flex-direction:column;align-items:stretch;gap:8px;background:var(--panel)}
@@ -144,8 +144,6 @@ body.light .hn{color:#6b4fd8}
     <div class="seg"><button class="chip" data-th="dark">Oscuro</button><button class="chip" data-th="light">Blanco</button></div>
     <h3>Transparencia</h3>
     <input type="range" id="alpha" min="0" max="90" step="1">
-    <h3>Noticias</h3>
-    <div class="seg"><button class="chip" data-as="1">Se deslizan solas</button><button class="chip" data-as="0">Quietas</button></div>
     <h3>Noticias visibles <span id="nVal"></span></h3>
     <input type="range" id="nVis" min="2" max="8" step="1">
     <h3>Mostrar</h3>
@@ -169,9 +167,9 @@ body.light .hn{color:#6b4fd8}
   <div class="card sp" id="c-dep" data-name="Resultados"><span class="mute">Cargando resultados…</span></div>
   <div class="card" id="c-dolar" data-name="Dólar"><span class="mute">Cargando dólar…</span></div>
 
-  <button class="arrow" id="up" title="Ver noticias anteriores">▲</button>
+  <button class="arrow" id="up" title="Subir (más nuevas)">▲</button>
   <div id="feed"></div>
-  <button class="arrow" id="down" title="Volver a las más nuevas">▼</button>
+  <button class="arrow" id="down" title="Ver anteriores">▼</button>
 </div>
 
 <script>
@@ -229,7 +227,7 @@ new ResizeObserver(fit).observe($('#hub'));
 
 // sliders
 const setAlpha = v => { document.documentElement.style.setProperty('--a',(v/100).toFixed(2)); store.set('alpha',+v); };
-const setN = v => { document.documentElement.style.setProperty('--n',v); $('#nVal').textContent=v; store.set('nVis',+v); toBottom(false); };
+const setN = v => { document.documentElement.style.setProperty('--n',v); $('#nVal').textContent=v; store.set('nVis',+v); toTop(false); };
 $('#alpha').value=store.get('alpha',42); $('#nVis').value=store.get('nVis',4);
 $('#alpha').oninput=e=>setAlpha(e.target.value); $('#nVis').oninput=e=>setN(e.target.value);
 
@@ -302,7 +300,6 @@ function pickCity(i){
   place=null; weather();
 }
 
-function setAS(on){ store.set('autoSlide',on); document.querySelectorAll('[data-as]').forEach(b=>b.classList.toggle('on',(b.dataset.as==='1')===on)); }
 
 // arranque automático con Windows/Mac
 const showAuto = on => document.querySelectorAll('[data-auto]').forEach(b=>b.classList.toggle('on',(b.dataset.auto==='1')===on));
@@ -470,10 +467,35 @@ let spRes=[];
 async function sports(){
   spRes=await Promise.all(SPORTS.map(s=>s.fn().catch(()=>null)));
   const row=SPORTS.map((s,i)=>tile(s,spRes[i])).join('');
-  $('#c-dep').innerHTML=`<div class="rail" style="--dur:${SPORTS.length*6}s">${row}${row}</div>`;
+  $('#c-dep').innerHTML=`<button class="nav2" data-tk="-1" title="Anterior">‹</button><div class="vp"><div class="rail" id="rail">${row}${row}</div></div><button class="nav2" data-tk="1" title="Siguiente">›</button>`;
 }
 // NBA: rota entre los partidos de la fecha
 setInterval(()=>{ if(nbaGames.length>1){ nbaI=(nbaI+1)%nbaGames.length; spRes[1]=nbaGames[nbaI]; document.querySelectorAll('#c-dep .tile:nth-child(7n+2)').forEach(el=>el.outerHTML=tile(SPORTS[1],spRes[1])); } }, 5e3);
+
+// cinta de resultados: se mueve sola a la derecha; con ‹ › se mueve a mano y a los 20 s vuelve a andar sola
+const TK = { x:0, target:null, idle:0, hover:false, speed:22 };   // px por segundo
+function tkFrame(t){
+  const r=$('#rail'); const dt=Math.min(.1,(t-(TK.t||t))/1000); TK.t=t;
+  if(r){
+    const W=r.scrollWidth/2;
+    if(W>0){
+      if(TK.target!=null){ TK.x += (TK.target-TK.x)*Math.min(1,dt*10); if(Math.abs(TK.target-TK.x)<.5){ TK.x=TK.target; } }
+      else if(!TK.hover && Date.now()>TK.idle) TK.x += TK.speed*dt;
+      if(Date.now()>TK.idle) TK.target=null;
+      while(TK.x>=0){ TK.x-=W; if(TK.target!=null) TK.target-=W; }
+      while(TK.x<-W){ TK.x+=W; if(TK.target!=null) TK.target+=W; }
+      r.style.transform=`translateX(${TK.x}px)`;
+    }
+  }
+  requestAnimationFrame(tkFrame);
+}
+requestAnimationFrame(tkFrame);
+function tkMove(dir){
+  const tile=$('#rail .tile'); const w=tile?tile.offsetWidth:110;
+  TK.target=(TK.target??TK.x) + dir*w; TK.idle=Date.now()+20e3;
+}
+$('#c-dep').addEventListener('mouseenter',()=>TK.hover=true);
+$('#c-dep').addEventListener('mouseleave',()=>TK.hover=false);
 
 /* ===== Feed: una noticia por tarjeta, viejas arriba, nuevas abajo ===== */
 let items = [];                 // ordenadas de vieja a nueva
@@ -505,9 +527,10 @@ async function rss(f){
 }
 const ago=d=>{const m=Math.max(0,Math.round((Date.now()-d)/6e4));return m<60?`${m} min`:m<1440?`${Math.round(m/60)} h`:`${Math.round(m/1440)} d`};
 const card=(n,isNew)=>`<a class="card nc${isNew?' new':''}" style="--c:${catColor(n.cat)}" data-u="${esc(n.link)}"><div class="mute"><span class="k">${esc(n.cat)}</span> · ${esc(n.src)} · hace ${ago(n.date)}</div><div class="t">${n.pf?`<span class="pf" style="background:${n.pf[1]}">${esc(n.pf[0])}</span>`:''}${esc(n.title)}</div></a>`;
-const atBottom = () => { const f=$('#feed'); return f.scrollHeight-f.scrollTop-f.clientHeight < 8; };
-function toBottom(smooth=true){ const f=$('#feed'); f.style.scrollBehavior=smooth?'':'auto'; f.scrollTop=f.scrollHeight; f.style.scrollBehavior=''; arrows(); }
-function arrows(){ const f=$('#feed'); $('#up').classList.toggle('on', f.scrollTop>4); $('#down').classList.toggle('on', !atBottom()); }
+const atTop = () => $('#feed').scrollTop < 6;
+const atEnd = () => { const f=$('#feed'); return f.scrollHeight-f.scrollTop-f.clientHeight < 8; };
+function toTop(smooth=true){ const f=$('#feed'); f.style.scrollBehavior=smooth?'':'auto'; f.scrollTop=0; f.style.scrollBehavior=''; $('#up').textContent='▲'; arrows(); }
+function arrows(){ $('#up').classList.toggle('on', !atTop()); $('#down').classList.toggle('on', !atEnd()); }
 function render(newOnes=new Set()){
   const vis = items.filter(n=>!hidden.includes(n.cat));
   $('#feed').innerHTML = vis.length ? vis.map(n=>card(n,newOnes.has(n.link))).join('') : '<div class="card nc"><span class="mute">Sin noticias todavía</span></div>';
@@ -530,31 +553,24 @@ async function loadNews(reset=false){
     }
     if(!fresh.length && !reset) return;
     const first = items.length===0;
-    const wasBottom = atBottom();
-    items = items.concat(fresh).sort((a,b)=>a.date-b.date).slice(-KEEP);
+    const wasTop = atTop();
+    items = items.concat(fresh).sort((a,b)=>b.date-a.date).slice(0,KEEP);   // nuevas arriba
     render(first ? new Set() : new Set(fresh.map(n=>n.link)));
-    if(first || wasBottom) toBottom(!first);
-    else $('#down').innerHTML='▼<span class="dot"></span>';
+    if(first || wasTop) toTop(false);
+    else $('#up').innerHTML='▲<span class="dot"></span>';                    // hay nuevas arriba
     arrows();
   } finally { loading = false; }
 }
 const step = () => { const c=$('#feed .nc'); return c ? c.offsetHeight + 7 : 71; };
-let pauseUntil = 0, endWait = 0;
-const pause = (sec=20) => { pauseUntil = Date.now() + sec*1e3; };
-$('#up').onclick = () => { pause(); $('#feed').scrollBy({top:-step()}); };
-$('#down').onclick = () => { pause(); toBottom(); $('#down').textContent='▼'; };
-$('#feed').addEventListener('scroll', () => { arrows(); if(atBottom()) $('#down').textContent='▼'; });
-$('#feed').addEventListener('mouseenter', () => pause(3600));
-$('#feed').addEventListener('mouseleave', () => pause(4));
-$('#feed').addEventListener('wheel', () => pause(), {passive:true});
-// deslizado automático: baja de a una tarjeta hasta las más nuevas y vuelve a empezar
-function autoSlide(){
-  if(!store.get('autoSlide',true) || Date.now()<pauseUntil) return;
-  const f=$('#feed');
-  if(atBottom()){ if(++endWait>=3){ endWait=0; f.scrollTo({top:0}); } }
-  else { endWait=0; f.scrollBy({top:step()}); }
-}
-setInterval(autoSlide, SLIDE_SEC*1e3);
+// si bajaste a ver anteriores, a los 20 s sin tocar nada vuelve arriba (a las más nuevas)
+let idleUntil = 0;
+const touch = () => { idleUntil = Date.now() + 20e3; };
+$('#up').onclick = () => { touch(); $('#feed').scrollBy({top:-step()}); };
+$('#down').onclick = () => { touch(); $('#feed').scrollBy({top:step()}); };
+$('#feed').addEventListener('scroll', () => { arrows(); if(atTop()) $('#up').textContent='▲'; });
+$('#feed').addEventListener('wheel', touch, {passive:true});
+$('#feed').addEventListener('mousemove', touch);
+setInterval(() => { if(!atTop() && Date.now() > idleUntil) toTop(); }, 2e3);
 
 // opciones
 function applyHidden(){
@@ -582,11 +598,11 @@ $('#bClose').onclick = closeApp; $('#bX').onclick = closeApp;
 $('#bCfg').onclick = () => { $('#cfg').hidden = !$('#cfg').hidden; };
 
 document.addEventListener('click',e=>{
+  const tk=e.target.closest('[data-tk]'); if(tk){ tkMove(+tk.dataset.tk); return; }
   const pk=e.target.closest('[data-pick]'); if(pk){ pickCity(+pk.dataset.pick); return; }
   const au=e.target.closest('[data-auto]'); if(au){ setAuto(au.dataset.auto==='1'); return; }
-  const as=e.target.closest('[data-as]'); if(as){ setAS(as.dataset.as==='1'); return; }
   const th=e.target.closest('[data-th]'); if(th){ setTheme(th.dataset.th); return; }
-  const t=e.target.closest('[data-t]'); if(t){const k=t.dataset.t; hidden=hidden.includes(k)?hidden.filter(x=>x!==k):[...hidden,k]; store.set('hidden',hidden); applyHidden(); render(); toBottom(false); return;}
+  const t=e.target.closest('[data-t]'); if(t){const k=t.dataset.t; hidden=hidden.includes(k)?hidden.filter(x=>x!==k):[...hidden,k]; store.set('hidden',hidden); applyHidden(); render(); toTop(false); return;}
   const r=e.target.closest('[data-rm]'); if(r){feedsCfg.splice(+r.dataset.rm,1); saveFeeds(); return;}
   const a=e.target.closest('[data-u]'); if(a){ e.preventDefault(); open(a.dataset.u); }
 });
@@ -594,7 +610,7 @@ document.addEventListener('click',e=>{
 const tick=()=>{$('#clock').textContent=new Date().toLocaleString('es-AR',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})};
 $('#bRef').onclick=()=>{place=null;weather();dolar();loadNews();sports()};
 
-setAlpha($('#alpha').value); setN($('#nVis').value); setTheme(store.get('theme','dark')); setAS(store.get('autoSlide',true)); setLock(store.get('locked',false));
+setAlpha($('#alpha').value); setN($('#nVis').value); setTheme(store.get('theme','dark')); setLock(store.get('locked',false));
 renderSources(); applyHidden();
 tick(); setInterval(tick,30e3);
 weather(); dolar(); loadNews().then(sports);
