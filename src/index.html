@@ -6,14 +6,14 @@
 <title>Strada Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--a:.42;--glass:rgba(22,26,38,var(--a));--edge:rgba(255,255,255,.26);--mute:rgba(255,255,255,.7);--acc:#2fd3c6;--warn:#ff7a66;--gold:#ffc94d}
+:root{--a:.42;--glass:rgba(22,26,38,var(--a));--edge:rgba(255,255,255,.26);--mute:rgba(255,255,255,.7);--acc:#2fd3c6;--warn:#ff7a66;--gold:#ffc94d;--rain:#4cc3ff;--hail:#c4b2ff;--org:#ffa94d;--red:#ff5a5a;--nh:64px;--gap:7px}
 *{box-sizing:border-box;min-width:0}
 html,body{margin:0;background:transparent;color:#fff;font:12.5px/1.35 Inter,system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;text-shadow:0 1px 3px rgba(0,0,0,.4)}
 body.web{background:linear-gradient(135deg,#1b2a4a,#3a2347 55%,#122c33);min-height:100vh}
 body.web #hub{width:340px}
-#hub{display:flex;flex-direction:column;gap:7px;padding:6px;width:100%}
+#hub{display:flex;flex-direction:column;gap:var(--gap);padding:6px;width:100%}
 .card{background:var(--glass);border:1px solid var(--edge);border-radius:15px;padding:9px 12px;display:flex;align-items:center;gap:10px;min-height:56px}
-.card[hidden]{display:none}
+[hidden]{display:none!important}
 .mute{color:var(--mute);font-size:11px}
 .grow{flex:1}
 /* barra */
@@ -25,31 +25,44 @@ body.web #hub{width:340px}
 /* clima */
 .temp{font-size:30px;font-weight:600;line-height:1}
 .wxi{width:38px;height:38px;flex:none}
+/* lluvia + granizo */
+.rh{flex-direction:column;align-items:stretch;gap:7px}
+.rh .head{display:flex;align-items:center;gap:10px;padding-bottom:9px}
 .ring{position:relative;width:42px;height:42px;flex:none}
 .ring svg{width:42px;height:42px;transform:rotate(-90deg)}
 .ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:10.5px}
-.bars{display:flex;align-items:flex-end;gap:2px;height:36px;flex:1}
-.bars i{flex:1;border-radius:2px;background:rgba(255,255,255,.35)}
-.bars i.r{background:#7fc8ff}.bars i.s{background:var(--warn)}
-.tag{font-size:10px;font-weight:600;border-radius:6px;padding:2px 6px;background:rgba(47,211,198,.3);white-space:nowrap}
-.tag.w{background:var(--warn)}
+.ring span{position:absolute;left:0;right:0;bottom:-13px;text-align:center;font-size:9px;color:var(--mute)}
+.tag{font-size:10.5px;font-weight:600;border-radius:6px;padding:2px 7px;background:rgba(47,211,198,.3);white-space:nowrap;display:inline-block}
+.tag.l1{background:var(--org);color:#2a1300;text-shadow:none}.tag.l2{background:var(--red)}
+.strip{display:grid;grid-template-columns:34px 1fr;gap:3px 6px;align-items:center;font-size:9.5px;color:var(--mute)}
+.cells{display:grid;grid-template-columns:repeat(12,1fr);gap:2px}
+.cells i{height:9px;border-radius:2px;background:rgba(255,255,255,.14)}
+.cells i.r1{background:#5ad8e6}.cells i.r2{background:var(--rain)}.cells i.r3{background:#2f7dff}
+.cells i.h1{background:var(--org)}.cells i.h2{background:var(--red)}
+.hrs{display:grid;grid-template-columns:repeat(12,1fr);font-size:9px;color:var(--mute);text-align:center}
+.hn{font-size:10.5px;color:var(--hail)}
+/* columnas */
 .cols{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;flex:1;text-align:center}
 .cols b{display:block;font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .cols svg{width:24px;height:24px;display:block;margin:1px auto}
 .side{writing-mode:vertical-rl;transform:rotate(180deg);flex:none}
-/* noticias */
-.news{flex:1;cursor:pointer}
-.news .t{font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.news:hover .t{color:var(--acc)}
-.nav{display:flex;flex-direction:column;gap:3px}
-.nav button{background:none;border:0;color:var(--mute);cursor:pointer;font-size:14px;padding:0 3px;height:17px}
-.nav button:hover{color:#fff}
-.poster{width:30px;height:44px;border-radius:5px;object-fit:cover;flex:none}
+/* feed de noticias */
+.arrow{align-self:center;background:rgba(22,26,38,calc(var(--a) + .1));border:1px solid var(--edge);color:#fff;border-radius:999px;height:22px;width:60px;cursor:pointer;font-size:11px;line-height:1;padding:0;opacity:.55;transition:opacity .2s}
+.arrow.on{opacity:1}.arrow:hover{background:rgba(255,255,255,.25)}
+.arrow .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--acc);margin-left:5px;vertical-align:middle}
+#feed{height:calc(var(--n) * var(--nh) + (var(--n) - 1) * var(--gap));overflow-y:auto;scroll-behavior:smooth;scrollbar-width:none;display:flex;flex-direction:column;gap:var(--gap)}
+#feed::-webkit-scrollbar{display:none}
+.nc{height:var(--nh);min-height:var(--nh);flex:none;cursor:pointer;display:block;padding:8px 12px}
+.nc .t{font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:1px}
+.nc:hover .t{color:var(--acc)}
+.nc .k{font-weight:700;color:#fff}
+.nc.new{animation:up .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.nc.new{animation:none}#feed{scroll-behavior:auto}}
 /* opciones */
 .set{flex-direction:column;align-items:stretch;gap:8px;background:rgba(22,26,38,.88)}
-.set h3{margin:4px 0 0;font-size:11px;color:var(--mute);font-weight:600}
-.set input[type=text],.set input:not([type]),.set select{width:100%;background:rgba(255,255,255,.1);border:1px solid var(--edge);border-radius:8px;color:#fff;padding:6px 8px;font:12px Inter,sans-serif;user-select:text;-webkit-user-select:text}
-.set select option{color:#000}
+.set h3{margin:4px 0 0;font-size:11px;color:var(--mute);font-weight:600;display:flex;justify-content:space-between}
+.set input[type=text],.set input:not([type]){width:100%;background:rgba(255,255,255,.1);border:1px solid var(--edge);border-radius:8px;color:#fff;padding:6px 8px;font:12px Inter,sans-serif;user-select:text;-webkit-user-select:text}
 input[type=range]{width:100%;accent-color:var(--acc)}
 .chips{display:flex;flex-wrap:wrap;gap:4px}
 .chip{background:rgba(255,255,255,.1);border:1px solid var(--edge);color:var(--mute);border-radius:999px;padding:3px 9px;font:600 11px Inter,sans-serif;cursor:pointer}
@@ -79,7 +92,9 @@ input[type=range]{width:100%;accent-color:var(--acc)}
   <div class="card set" id="cfg" hidden>
     <h3>Transparencia</h3>
     <input type="range" id="alpha" min="0" max="90" step="1">
-    <h3>Tarjetas visibles</h3>
+    <h3>Noticias visibles <span id="nVal"></span></h3>
+    <input type="range" id="nVis" min="2" max="8" step="1">
+    <h3>Mostrar</h3>
     <div class="chips" id="cardChips"></div>
     <h3>Fuentes de noticias</h3>
     <div id="srcList"></div>
@@ -92,19 +107,19 @@ input[type=range]{width:100%;accent-color:var(--acc)}
       <div class="err u" id="aErr"></div>
     </div>
     <datalist id="cats"></datalist>
-    <h3>Cine con pósters (clave TMDB, opcional)</h3>
-    <input id="tmdbKey" placeholder="API key de themoviedb.org">
     <button class="btn ghost" id="bReset">Restaurar fuentes predeterminadas</button>
     <button class="btn red" id="bClose">Cerrar Strada Hub</button>
   </div>
 
   <div class="card" id="c-clima" data-name="Clima"><span class="mute">Cargando clima…</span></div>
-  <div class="card" id="c-lluvia" data-name="Lluvia"></div>
+  <div class="card rh" id="c-lluvia" data-name="Lluvia y granizo"></div>
   <div class="card" id="c-pron" data-name="Pronóstico"></div>
   <div class="card" id="c-sol" data-name="Sol y UV"></div>
   <div class="card" id="c-dolar" data-name="Dólar"><span class="mute">Cargando dólar…</span></div>
-  <div class="card" id="c-merc" data-name="Mercados"><span class="mute">Cargando mercados…</span></div>
-  <div id="newsCards" style="display:contents"></div>
+
+  <button class="arrow" id="up" title="Ver noticias anteriores">▲</button>
+  <div id="feed"></div>
+  <button class="arrow" id="down" title="Volver a las más nuevas">▼</button>
 </div>
 
 <script>
@@ -119,8 +134,10 @@ const DEFAULT_FEEDS = [
   {cat:'Cine', name:'Espinof', url:'https://www.espinof.com/index.xml'}
 ];
 const FALLBACK = { city:'Córdoba', lat:-31.42, lon:-64.18 };
+const RM = 'https://raw.githubusercontent.com/StradaDG/rain-meter/main/';   // datos de Rain Meter
+const CBA = { lat:-31.420, lon:-64.189 };
 const DOLARES = { oficial:'Oficial', blue:'Blue', bolsa:'MEP', contadoconliqui:'CCL' };
-const REFRESH_MIN = 10, ROTATE_SEC = 15, WIDTH = 340;
+const WIDTH = 340, KEEP = 40, NEWS_MIN = 5, WX_MIN = 10;
 
 const T = window.__TAURI__;
 if (!T) document.body.classList.add('web');
@@ -128,7 +145,6 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const store = { get:(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch{return d}}, set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}} };
 const open = url => T?.opener ? T.opener.openUrl(url) : window.open(url,'_blank');
-const slug = s => 'n-'+String(s).toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'');
 
 let feedsCfg = store.get('feeds', DEFAULT_FEEDS);
 let hidden = store.get('hidden', []);
@@ -138,120 +154,156 @@ const fit = () => { if(!T?.window) return; const h=Math.ceil($('#hub').getBoundi
   T.window.getCurrentWindow().setSize(new T.dpi.LogicalSize(WIDTH, h)).catch(()=>{}); };
 new ResizeObserver(fit).observe($('#hub'));
 
-// transparencia
-const setAlpha = v => { document.documentElement.style.setProperty('--a', (v/100).toFixed(2)); store.set('alpha', v); };
-$('#alpha').value = store.get('alpha', 42); setAlpha($('#alpha').value);
-$('#alpha').oninput = e => setAlpha(e.target.value);
+// sliders
+const setAlpha = v => { document.documentElement.style.setProperty('--a',(v/100).toFixed(2)); store.set('alpha',+v); };
+const setN = v => { document.documentElement.style.setProperty('--n',v); $('#nVal').textContent=v; store.set('nVis',+v); toBottom(false); };
+$('#alpha').value=store.get('alpha',42); $('#nVis').value=store.get('nVis',4);
+$('#alpha').oninput=e=>setAlpha(e.target.value); $('#nVis').oninput=e=>setN(e.target.value);
 
-// iconos clima
+// iconos
 const WX = {0:'Despejado',1:'Mayormente despejado',2:'Parcialmente nublado',3:'Nublado',45:'Niebla',48:'Niebla',51:'Llovizna',53:'Llovizna',55:'Llovizna',61:'Lluvia débil',63:'Lluvia',65:'Lluvia fuerte',80:'Chaparrones',81:'Chaparrones',82:'Chaparrones fuertes',95:'Tormenta',96:'Tormenta con granizo',99:'Granizo fuerte'};
 const sun='<circle cx="26" cy="24" r="10" fill="#ffc94d"/><g stroke="#ffc94d" stroke-width="3" stroke-linecap="round"><path d="M26 6v4M26 38v4M8 24h4M40 24h4M13 11l3 3M36 34l3 3M13 37l3-3M36 14l3-3"/></g>';
 const cloud=(c='#fff')=>`<path d="M20 52h28a10 10 0 0 0 0-20 14 14 0 0 0-27-3A11 11 0 0 0 20 52z" fill="${c}"/>`;
 const drops='<g stroke="#7fc8ff" stroke-width="3" stroke-linecap="round"><path d="M26 56l-3 6M36 56l-3 6M46 56l-3 6"/></g>';
 const bolt='<path d="M38 50l-6 9h6l-4 9 10-12h-6l4-6z" fill="#ffc94d"/>';
-const icon=(c,cls='wxi')=>`<svg class="${cls}" viewBox="0 0 70 70">${c<=1?sun:c<=2?sun+cloud():c<=48?cloud('#dfe6ee'):c<95?cloud('#dfe6ee')+drops:cloud('#c9d2de')+bolt}</svg>`;
+const stones='<g fill="#fff" stroke="#8fd3ff" stroke-width="2"><circle cx="24" cy="59" r="3.5"/><circle cx="36" cy="63" r="3.5"/><circle cx="47" cy="58" r="3.5"/></g>';
+const icon=(c,cls='wxi')=>`<svg class="${cls}" viewBox="0 0 70 70">${c<=1?sun:c<=2?sun+cloud():c<=48?cloud('#dfe6ee'):c<95?cloud('#dfe6ee')+drops:c===95?cloud('#c9d2de')+bolt:cloud('#c9d2de')+stones}</svg>`;
+
+/* ===== Granizo: mismo análisis que Rain Meter ===== */
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const lerp=(x,x0,x1,y0,y1)=>y0+(y1-y0)*clamp((x-x0)/(x1-x0),0,1);
+function shear(s1,d1,s2,d2){const r=Math.PI/180;const u=s2*Math.sin(d2*r)-s1*Math.sin(d1*r),v=s2*Math.cos(d2*r)-s1*Math.cos(d1*r);return Math.hypot(u,v)}
+function hailScore(h){
+  const cape=h.cape??0, li=h.lifted_index??0, fz=h.freezing_level_height??4500, cin=h.convective_inhibition??0;
+  const sh=shear(h.wind_speed_10m??0,h.wind_direction_10m??0,h.wind_speed_500hPa??0,h.wind_direction_500hPa??0);
+  let s = cape<300?0 : cape<1000?lerp(cape,300,1000,0,30) : cape<2500?lerp(cape,1000,2500,30,55) : lerp(cape,2500,4000,55,65);
+  if(cape>=300){ s+=lerp(sh,35,75,0,20); s+= fz<3500?10 : fz<4200?5 : fz>4600?-10:0; s+= li<-7?15 : li<-4?10 : li<-2?4:0; s+=(h.temperature_500hPa??0)<-12?5:0; if(cin<-150) s*=0.6; }
+  const pp0=h.precipitation_probability??0, rainy=pp0>=50||(h.precipitation??0)>=.1||(h.showers??0)>=.1||[80,81,82,95,96,99].includes(h.weather_code);
+  if(rainy){ const t5=h.temperature_500hPa??0,t8=h.temperature_850hPa??(t5+25),vt=t8-t5; let c=vt>=28?35:vt>=26?25:vt>=24?15:0;
+    if(c){c+=t5<=-18?15:t5<=-15?10:0;c+=fz<=3000?15:fz<=3500?8:0;c+=cape>=300?10:cape>=100?5:0;c+=li<=2?5:0;s=Math.max(s,c)} }
+  const rainNow=(h.precipitation??0)>=.3||(h.showers??0)>=.2||[80,81,82,95,96,99].includes(h.weather_code);
+  if(rainNow&&cape>=100){ const t5=h.temperature_500hPa??0,t7=h.temperature_700hPa??t5+15,lapse=(t7-t5)/2.6; let c=t5<=-18?35:t5<=-15?25:t5<=-12?15:0;
+    if(c){c+=fz<=3000?15:fz<=3500?10:0;c+=lapse>=7.2?15:lapse>=6.5?10:0;c+=cape>=300?5:0;s=Math.max(s,c)} }
+  if(h.weather_code===95) s+=10;
+  s*=(0.35+0.65*(pp0/100));
+  if(h.weather_code===96||h.weather_code===99) s=Math.max(s,75);
+  return Math.round(clamp(s,0,100));
+}
+const hailLevel=s=>s>=55?2:s>=30?1:0;
+const LVL=['Sin granizo','Granizo posible','Granizo probable'];
+const VARS='temperature_2m,precipitation,precipitation_probability,weather_code,cape,lifted_index,convective_inhibition,freezing_level_height,wind_speed_10m,wind_direction_10m,wind_speed_500hPa,wind_direction_500hPa,temperature_500hPa,temperature_700hPa,temperature_850hPa,showers';
+const km=(a,b)=>{const r=Math.PI/180,dl=(b.lat-a.lat)*r,dn=(b.lon-a.lon)*r;return 12742*Math.asin(Math.sqrt(Math.sin(dl/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dn/2)**2))};
+const getJSON = async u => { try{ const r=await fetch(u,{cache:'no-store'}); return r.ok?await r.json():null }catch{ return null } };
 
 // ubicación por IP
 let place = null;
 async function locate(){
-  try{ const d=await (await fetch('https://get.geojs.io/v1/ip/geo.json')).json();
-    place={ city:d.city||d.region||'Tu ubicación', lat:+d.latitude, lon:+d.longitude }; }
-  catch(e){ place=FALLBACK; }
+  const d=await getJSON('https://get.geojs.io/v1/ip/geo.json');
+  place = d ? { city:d.city||d.region||'Tu ubicación', lat:+d.latitude, lon:+d.longitude } : FALLBACK;
   $('#city').textContent=place.city;
 }
 
 const hm = s => s ? s.slice(11,16) : '—';
 async function weather(){
   if(!place) await locate();
-  const u=`https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&hourly=precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_hours=12&forecast_days=6`;
-  try{
-    const d=await (await fetch(u)).json(), c=d.current, h=d.hourly, D=d.daily;
-    $('#c-clima').innerHTML=`${icon(c.weather_code)}<div class="temp">${Math.round(c.temperature_2m)}°</div>
-      <div class="grow"><b>${esc(WX[c.weather_code]||'—')}</b><div class="mute">ST ${Math.round(c.apparent_temperature)}° · Hum ${c.relative_humidity_2m}% · ${Math.round(c.wind_speed_10m)} km/h</div></div>
-      <div class="mute" style="text-align:right">↑ ${Math.round(D.temperature_2m_max[0])}°<br>↓ ${Math.round(D.temperature_2m_min[0])}°</div>`;
-    const p6=h.precipitation_probability.slice(0,6), cd=h.weather_code.slice(0,6), mx=Math.max(...p6);
-    const hail=cd.some(x=>x>=96), storm=cd.some(x=>x>=95), C=2*Math.PI*16;
-    const bad=hail||storm||mx>=70, col=hail||storm?'var(--warn)':mx>=50?'#7fc8ff':'var(--acc)';
-    const msg=hail?'⚠ Granizo':storm?'⚠ Tormenta':mx>=70?'Lluvia probable':'Sin alertas';
-    $('#c-lluvia').innerHTML=`<div class="ring"><svg viewBox="0 0 42 42"><circle cx="21" cy="21" r="16" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="5"/><circle cx="21" cy="21" r="16" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C*mx/100} ${C}"/></svg><b>${mx}%</b></div>
-      <div><span class="tag ${bad?'w':''}">${msg}</span><div class="mute" style="margin-top:3px">lluvia · 12 h</div></div>
-      <div class="bars">${h.precipitation_probability.map((p,i)=>`<i class="${h.weather_code[i]>=95?'s':p>=50?'r':''}" style="height:${Math.max(p,6)}%" title="${hm(h.time[i])} · ${p}%"></i>`).join('')}</div>`;
-    const days=D.time.slice(1,6).map((t,j)=>{const i=j+1, wd=new Date(t+'T12:00').toLocaleDateString('es-AR',{weekday:'short'});
-      return `<div><span class="mute">${esc(wd)}</span>${icon(D.weather_code[i],'')}<b>${Math.round(D.temperature_2m_max[i])}°</b><span class="mute">${Math.round(D.temperature_2m_min[i])}° · ${D.precipitation_probability_max[i]}%</span></div>`}).join('');
-    $('#c-pron').innerHTML=`<div class="cols">${days}</div>`;
-    const uv=D.uv_index_max[0], uvTxt=uv<3?'bajo':uv<6?'moderado':uv<8?'alto':uv<11?'muy alto':'extremo';
-    $('#c-sol').innerHTML=`<div class="cols"><div><span class="mute">Amanecer</span><b>${hm(D.sunrise[0])}</b></div><div><span class="mute">Atardecer</span><b>${hm(D.sunset[0])}</b></div><div><span class="mute">UV máx.</span><b style="color:${uv>=8?'var(--warn)':uv>=6?'var(--gold)':'#fff'}">${Math.round(uv)} · ${uvTxt}</b></div></div>`;
-  }catch(e){ $('#c-clima').innerHTML='<span class="mute">Sin conexión con el clima</span>'; }
+  const nearCba = km(place,CBA) < 25;
+  const [d, fus, hn] = await Promise.all([
+    getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&hourly=${VARS}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_hours=12&forecast_days=6`),
+    nearCba ? getJSON(RM+'fusion.json?t='+Date.now()) : null,
+    nearCba ? getJSON(RM+'granizo.json?t='+Date.now()) : null ]);
+  if(!d){ $('#c-clima').innerHTML='<span class="mute">Sin conexión con el clima</span>'; return; }
+  const c=d.current, H=d.hourly, D=d.daily, off=d.utc_offset_seconds*1000;
+  $('#c-clima').innerHTML=`${icon(c.weather_code)}<div class="temp">${Math.round(c.temperature_2m)}°</div>
+    <div class="grow"><b>${esc(WX[c.weather_code]||'—')}</b><div class="mute">ST ${Math.round(c.apparent_temperature)}° · Hum ${c.relative_humidity_2m}% · ${Math.round(c.wind_speed_10m)} km/h</div></div>
+    <div class="mute" style="text-align:right">↑ ${Math.round(D.temperature_2m_max[0])}°<br>↓ ${Math.round(D.temperature_2m_min[0])}°</div>`;
+
+  // horas: lluvia y granizo (análisis propio; en Córdoba se usa la fusión de modelos de Rain Meter si está al día)
+  const fusH = fus && Date.now()-fus.updated < 45*60e3 ? fus.places?.cba?.hours||[] : [];
+  const hrs = H.time.map((t,i)=>{
+    const o={}; for(const k in H) if(k!=='time') o[k]=H[k][i];
+    const ms=Date.parse(t+':00Z')-off, f=fusH.find(x=>x.t===ms);
+    const hs=f?f.p:hailScore(o), mm=o.precipitation??0, pp=o.precipitation_probability??0;
+    return { t, pp, hs, hl:hailLevel(hs), rl: mm>=6&&pp>=30?3 : mm>=2&&pp>=30?2 : pp>=50||mm>=.3?1:0 };
+  });
+  const maxR=Math.max(...hrs.map(h=>h.pp)), maxH=Math.max(...hrs.map(h=>h.hs)), lv=hailLevel(maxH);
+  const firstH=hrs.find(h=>h.hl>0), C=2*Math.PI*16;
+  const ring=(v,col,lab)=>`<div class="ring"><svg viewBox="0 0 42 42"><circle cx="21" cy="21" r="16" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="5"/><circle cx="21" cy="21" r="16" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C*v/100} ${C}"/></svg><b>${v}%</b><span>${lab}</span></div>`;
+  const msg = lv ? `${LVL[lv]}${firstH?' · desde las '+hm(firstH.t):''}` : maxR>=70 ? 'Lluvia probable' : maxR>=40 ? 'Puede llover' : 'Sin lluvia ni granizo';
+  const today = new Date().toLocaleDateString('en-CA',{timeZone:'America/Argentina/Cordoba'});
+  const barrios = hn && hn.date===today && hn.barrios?.length ? `<div class="hn">🧊 Granizo hoy en: ${hn.barrios.map(b=>esc(b.name)).join(', ')}</div>` : '';
+  $('#c-lluvia').innerHTML=`<div class="head">${ring(maxR,maxR>=50?'var(--rain)':'var(--acc)','lluvia')}${ring(maxH,lv===2?'var(--red)':lv===1?'var(--org)':'var(--hail)','granizo')}
+      <div class="grow"><span class="tag ${lv?'l'+lv:''}">${esc(msg)}</span><div class="mute" style="margin-top:3px">próximas 12 h${fusH.length?' · fusión de modelos':''}</div></div></div>
+    <div class="strip"><span>Lluvia</span><div class="cells">${hrs.map(h=>`<i class="${h.rl?'r'+h.rl:''}" title="${hm(h.t)} · ${h.pp}%"></i>`).join('')}</div>
+      <span>Granizo</span><div class="cells">${hrs.map(h=>`<i class="${h.hl?'h'+h.hl:''}" title="${hm(h.t)} · índice ${h.hs}"></i>`).join('')}</div>
+      <span></span><div class="hrs">${hrs.map((h,i)=>`<span>${i%3?'':hm(h.t).slice(0,2)}</span>`).join('')}</div></div>${barrios}`;
+
+  $('#c-pron').innerHTML=`<div class="cols">${D.time.slice(1,6).map((t,j)=>{const i=j+1;
+    return `<div><span class="mute">${esc(new Date(t+'T12:00').toLocaleDateString('es-AR',{weekday:'short'}))}</span>${icon(D.weather_code[i],'')}<b>${Math.round(D.temperature_2m_max[i])}°</b><span class="mute">${Math.round(D.temperature_2m_min[i])}° · ${D.precipitation_probability_max[i]}%</span></div>`}).join('')}</div>`;
+  const uv=D.uv_index_max[0], uvTxt=uv<3?'bajo':uv<6?'moderado':uv<8?'alto':uv<11?'muy alto':'extremo';
+  $('#c-sol').innerHTML=`<div class="cols"><div><span class="mute">Amanecer</span><b>${hm(D.sunrise[0])}</b></div><div><span class="mute">Atardecer</span><b>${hm(D.sunset[0])}</b></div><div><span class="mute">UV máx.</span><b style="color:${uv>=8?'var(--warn)':uv>=6?'var(--gold)':'#fff'}">${Math.round(uv)} · ${uvTxt}</b></div></div>`;
 }
 
-const money = (n,p='$') => n==null||isNaN(n)?'—':p+Math.round(n).toLocaleString('es-AR');
+const money = n => n==null||isNaN(n)?'—':'$'+Math.round(n).toLocaleString('es-AR');
 async function dolar(){
-  try{ const d=await (await fetch('https://dolarapi.com/v1/dolares')).json();
-    $('#c-dolar').innerHTML=`<span class="mute side">US$</span><div class="cols">${Object.entries(DOLARES).map(([k,n])=>`<div><span class="mute">${n}</span><b>${money(d.find(y=>y.casa===k)?.venta)}</b></div>`).join('')}</div>`; }
-  catch(e){ $('#c-dolar').innerHTML='<span class="mute">Sin conexión con DolarApi</span>'; }
-}
-async function mercados(){
-  const get = async u => { try{ return await (await fetch(u)).json() }catch{ return null } };
-  const [cg, rp] = await Promise.all([
-    get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true'),
-    get('https://api.argentinadatos.com/v1/finanzas/indices/riesgo-pais/ultimo')]);
-  const ch = v => v==null?'':`<span class="mute" style="color:${v>=0?'var(--acc)':'var(--warn)'}">${v>=0?'▲':'▼'} ${Math.abs(v).toFixed(1)}%</span>`;
-  $('#c-merc').innerHTML=`<div class="cols">
-    <div><span class="mute">Bitcoin</span><b>${money(cg?.bitcoin?.usd,'US$')}</b>${ch(cg?.bitcoin?.usd_24h_change)}</div>
-    <div><span class="mute">Ethereum</span><b>${money(cg?.ethereum?.usd,'US$')}</b>${ch(cg?.ethereum?.usd_24h_change)}</div>
-    <div><span class="mute">Riesgo país</span><b>${rp?.valor!=null?Math.round(rp.valor):'—'}</b><span class="mute">pb</span></div></div>`;
+  const d=await getJSON('https://dolarapi.com/v1/dolares');
+  $('#c-dolar').innerHTML = d ? `<span class="mute side">US$</span><div class="cols">${Object.entries(DOLARES).map(([k,n])=>`<div><span class="mute">${n}</span><b>${money(d.find(y=>y.casa===k)?.venta)}</b></div>`).join('')}</div>`
+    : '<span class="mute">Sin conexión con DolarApi</span>';
 }
 
-// noticias: una tarjeta por categoría, una noticia a la vez
-const news = {};
+/* ===== Feed: una noticia por tarjeta, viejas arriba, nuevas abajo ===== */
+let items = [];                 // ordenadas de vieja a nueva
+const seen = new Set();
 const cats = () => [...new Set(feedsCfg.map(f=>f.cat))];
-async function rss(src,url){
-  const d=await (await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(url))).json();
+async function rss(f){
+  const d=await (await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(f.url))).json();
   if(d.status!=='ok') throw new Error('feed');
-  return d.items.map(i=>({src,title:i.title,link:i.link,date:new Date(String(i.pubDate).replace(' ','T')+'Z')}));
+  return d.items.map(i=>({cat:f.cat,src:f.name,title:i.title,link:i.link,date:Date.parse(String(i.pubDate).replace(' ','T')+'Z')||Date.now()}));
 }
-const ago=d=>{if(!d||isNaN(d))return '';const m=Math.round((Date.now()-d)/6e4);return ' · hace '+(m<60?`${m} min`:m<1440?`${Math.round(m/60)} h`:`${Math.round(m/1440)} d`)};
-function show(cat){
-  const f=news[cat], el=document.getElementById(slug(cat)); if(!f||!el) return;
-  const n=f.items[f.i];
-  if(!n){ el.innerHTML=`<span class="mute"><b style="color:#fff">${esc(cat)}</b> · sin noticias</span>`; return; }
-  el.innerHTML=`${n.img?`<img class="poster" src="${esc(n.img)}" alt="">`:''}
-    <div class="news" data-u="${esc(n.link)}"><div class="mute"><b style="color:#fff">${esc(cat)}</b> · ${esc(n.src)}${ago(n.date)} · ${f.i+1}/${f.items.length}</div><div class="t">${esc(n.title)}</div></div>
-    <div class="nav"><button data-c="${esc(cat)}" data-d="-1">‹</button><button data-c="${esc(cat)}" data-d="1">›</button></div>`;
+const ago=d=>{const m=Math.max(0,Math.round((Date.now()-d)/6e4));return m<60?`${m} min`:m<1440?`${Math.round(m/60)} h`:`${Math.round(m/1440)} d`};
+const card=(n,isNew)=>`<a class="card nc${isNew?' new':''}" data-u="${esc(n.link)}"><div class="mute"><span class="k">${esc(n.cat)}</span> · ${esc(n.src)} · hace ${ago(n.date)}</div><div class="t">${esc(n.title)}</div></a>`;
+const atBottom = () => { const f=$('#feed'); return f.scrollHeight-f.scrollTop-f.clientHeight < 8; };
+function toBottom(smooth=true){ const f=$('#feed'); f.style.scrollBehavior=smooth?'':'auto'; f.scrollTop=f.scrollHeight; f.style.scrollBehavior=''; arrows(); }
+function arrows(){ const f=$('#feed'); $('#up').classList.toggle('on', f.scrollTop>4); $('#down').classList.toggle('on', !atBottom()); }
+function render(newOnes=new Set()){
+  const vis = items.filter(n=>!hidden.includes(n.cat));
+  $('#feed').innerHTML = vis.length ? vis.map(n=>card(n,newOnes.has(n.link))).join('') : '<div class="card nc"><span class="mute">Sin noticias todavía</span></div>';
 }
-function buildNewsCards(){
-  $('#newsCards').innerHTML = cats().map(c=>`<div class="card" id="${slug(c)}" data-name="${esc(c)}"><span class="mute">Cargando ${esc(c)}…</span></div>`).join('');
-  applyHidden();
+async function loadNews(reset=false){
+  if(reset){ items=[]; seen.clear(); }
+  const got=(await Promise.all(feedsCfg.map(f=>rss(f).catch(()=>[])))).flat();
+  const fresh=got.filter(n=>n.link&&!seen.has(n.link));
+  if(!fresh.length && !reset) return;
+  const first = items.length===0;
+  fresh.forEach(n=>seen.add(n.link));
+  const wasBottom = atBottom();
+  items = items.concat(fresh).sort((a,b)=>a.date-b.date).slice(-KEEP);
+  render(first ? new Set() : new Set(fresh.map(n=>n.link)));
+  if(first || wasBottom) toBottom(!first);
+  else $('#down').innerHTML='▼<span class="dot"></span>';      // hay nuevas abajo
+  arrows();
 }
-async function loadCat(cat){
-  const tmdb = store.get('tmdb','');
-  if(cat==='Cine' && tmdb){ try{
-    const d=await (await fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=${encodeURIComponent(tmdb)}&language=es-AR&region=AR`)).json();
-    news[cat]={i:0,items:d.results.slice(0,15).map(m=>({src:'En cartelera',title:m.title,link:`https://www.themoviedb.org/movie/${+m.id}`,img:m.poster_path?`https://image.tmdb.org/t/p/w92${m.poster_path}`:''}))};
-    show(cat); return; }catch(e){} }
-  const list=feedsCfg.filter(f=>f.cat===cat);
-  const items=(await Promise.all(list.map(f=>rss(f.name,f.url).catch(()=>[])))).flat().sort((a,b)=>(b.date||0)-(a.date||0));
-  news[cat]={i:0,items:items.slice(0,20)}; show(cat);
-}
-const loadNews = () => cats().forEach(loadCat);
-setInterval(()=>{for(const c in news){const f=news[c]; if(f.items.length>1){f.i=(f.i+1)%f.items.length; show(c);}}}, ROTATE_SEC*1e3);
+const step = () => $('#feed').clientHeight / +getComputedStyle(document.documentElement).getPropertyValue('--n') ;
+$('#up').onclick = () => { $('#feed').scrollBy({top:-step()}); };
+$('#down').onclick = () => { toBottom(); $('#down').textContent='▼'; };
+$('#feed').addEventListener('scroll', () => { arrows(); if(atBottom()) $('#down').textContent='▼'; });
 
 // opciones
 function applyHidden(){
   document.querySelectorAll('[data-name]').forEach(el=>el.hidden=hidden.includes(el.dataset.name));
-  $('#cardChips').innerHTML=[...document.querySelectorAll('[data-name]')].map(el=>`<button class="chip ${hidden.includes(el.dataset.name)?'':'on'}" data-t="${esc(el.dataset.name)}">${esc(el.dataset.name)}</button>`).join('');
+  const names=[...document.querySelectorAll('[data-name]')].map(el=>el.dataset.name).concat(cats());
+  $('#cardChips').innerHTML=names.map(n=>`<button class="chip ${hidden.includes(n)?'':'on'}" data-t="${esc(n)}">${esc(n)}</button>`).join('');
 }
 function renderSources(){
   $('#srcList').innerHTML = feedsCfg.length ? feedsCfg.map((f,i)=>`<div class="src"><span class="grow"><b>${esc(f.cat)}</b> · ${esc(f.name)}</span><button class="x" data-rm="${i}" title="Quitar">✕</button></div>`).join('') : '<span class="mute">Sin fuentes</span>';
   $('#cats').innerHTML = cats().map(c=>`<option value="${esc(c)}">`).join('');
 }
-function saveFeeds(){ store.set('feeds',feedsCfg); renderSources(); buildNewsCards(); loadNews(); }
+function saveFeeds(){ store.set('feeds',feedsCfg); renderSources(); applyHidden(); loadNews(true); }
 $('#aBtn').onclick = async () => {
-  const cat=$('#aCat').value.trim(), name=$('#aName').value.trim(), url=$('#aUrl').value.trim();
+  const f={cat:$('#aCat').value.trim(), name:$('#aName').value.trim(), url:$('#aUrl').value.trim()};
   $('#aErr').textContent='';
-  if(!cat||!name||!/^https?:\/\//.test(url)){ $('#aErr').textContent='Completá categoría, nombre y un link que empiece con http'; return; }
+  if(!f.cat||!f.name||!/^https?:\/\//.test(f.url)){ $('#aErr').textContent='Completá categoría, nombre y un link que empiece con http'; return; }
   $('#aBtn').textContent='Probando fuente…';
-  try{ await rss(name,url); feedsCfg.push({cat,name,url}); saveFeeds(); $('#aName').value=$('#aUrl').value=''; }
+  try{ await rss(f); feedsCfg.push(f); saveFeeds(); $('#aName').value=$('#aUrl').value=''; }
   catch(e){ $('#aErr').textContent='No pude leer ese link. Tiene que ser un feed RSS (suele terminar en /feed o /rss).'; }
   $('#aBtn').textContent='+ Agregar';
 };
@@ -259,23 +311,22 @@ $('#bReset').onclick = () => { feedsCfg = DEFAULT_FEEDS.slice(); saveFeeds(); };
 const closeApp = () => T?.window ? T.window.getCurrentWindow().close() : window.close();
 $('#bClose').onclick = closeApp; $('#bX').onclick = closeApp;
 $('#bCfg').onclick = () => { $('#cfg').hidden = !$('#cfg').hidden; };
-$('#tmdbKey').value = store.get('tmdb','');
-$('#tmdbKey').onchange = e => { store.set('tmdb', e.target.value.trim()); loadCat('Cine'); };
 
 document.addEventListener('click',e=>{
-  const n=e.target.closest('[data-d]'); if(n){const f=news[n.dataset.c]; if(f?.items.length){f.i=(f.i+ +n.dataset.d+f.items.length)%f.items.length; show(n.dataset.c);} return;}
-  const t=e.target.closest('[data-t]'); if(t){const k=t.dataset.t; hidden=hidden.includes(k)?hidden.filter(x=>x!==k):[...hidden,k]; store.set('hidden',hidden); applyHidden(); return;}
+  const t=e.target.closest('[data-t]'); if(t){const k=t.dataset.t; hidden=hidden.includes(k)?hidden.filter(x=>x!==k):[...hidden,k]; store.set('hidden',hidden); applyHidden(); render(); toBottom(false); return;}
   const r=e.target.closest('[data-rm]'); if(r){feedsCfg.splice(+r.dataset.rm,1); saveFeeds(); return;}
-  const a=e.target.closest('[data-u]'); if(a) open(a.dataset.u);
+  const a=e.target.closest('[data-u]'); if(a){ e.preventDefault(); open(a.dataset.u); }
 });
 
 const tick=()=>{$('#clock').textContent=new Date().toLocaleString('es-AR',{weekday:'long',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})};
-const all=()=>{weather();dolar();mercados();loadNews()};
-$('#bRef').onclick=()=>{place=null;all()};
+$('#bRef').onclick=()=>{place=null;weather();dolar();loadNews()};
 
-buildNewsCards(); renderSources();
+setAlpha($('#alpha').value); setN($('#nVis').value);
+renderSources(); applyHidden();
 tick(); setInterval(tick,30e3);
-all(); setInterval(all,REFRESH_MIN*6e4);
+weather(); dolar(); loadNews();
+setInterval(()=>{weather();dolar()}, WX_MIN*6e4);
+setInterval(loadNews, NEWS_MIN*6e4);
 }
 </script>
 </body>

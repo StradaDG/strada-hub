@@ -1,6 +1,6 @@
 [package]
 name = "strada-hub"
-version = "0.3.0"
+version = "0.4.0"
 description = "Strada Hub"
 authors = ["Strada"]
 edition = "2024"
