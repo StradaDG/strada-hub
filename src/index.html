@@ -60,7 +60,11 @@ body.web #hub{width:340px}
 .nc{height:var(--nh);min-height:var(--nh);flex:none;cursor:pointer;display:block;padding:8px 12px}
 .nc .t{font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:1px}
 .nc:hover .t{color:var(--acc)}
+.nc{position:relative}
+.nc::before{content:'';position:absolute;left:5px;top:12px;bottom:12px;width:2px;border-radius:2px;background:var(--c,transparent)}
+body.light .nc::before{filter:brightness(.8) saturate(1.3)}
 .nc .k{font-weight:700;color:var(--ink)}
+.cdot{display:inline-block;width:2px;height:11px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 .pf{display:inline-block;color:#fff;border-radius:5px;padding:0 6px;margin-right:5px;font-size:11px;font-weight:700;text-shadow:none;vertical-align:1px}
 .nc.new{animation:up .6s cubic-bezier(.2,.8,.2,1)}
 @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
@@ -161,6 +165,9 @@ const DEFAULT_FEEDS = [
   {cat:'Cine', name:'Espinof', url:'https://www.espinof.com/index.xml'}
 ];
 const OLD_DEFAULT_URLS = ['https://ar.motor1.com/rss/news/all/','https://autoblog.com.ar/feed/','https://parabrisas.perfil.com/feed','https://es.motorsport.com/rss/all/news/','https://www.lavoz.com.ar/arc/outboundfeeds/feeds/rss/?outputType=xml','https://www.infobae.com/arc/outboundfeeds/rss/','https://www.espinof.com/index.xml'];
+const CAT_COLORS = { 'Autos':'#ff8a3d', 'Motorsport':'#ffd43b', 'F1':'#ff2d2d', 'NBA':'#4c8dff', 'Atenas':'#1fb35a', 'Fútbol Córdoba':'#c6f04d',
+  'Inter Miami':'#f7a8c8', 'Córdoba':'#2fd3c6', 'Series':'#b48cff', 'Cine':'#ff6fb0', 'Noticias':'#9fb3c8' };
+const catColor = c => CAT_COLORS[c] || `hsl(${[...String(c)].reduce((h,ch)=>(h*31+ch.charCodeAt(0))%360,7)} 75% 62%)`;
 const PLATFORMS = [
   [/netflix/i,'Netflix','#e50914'], [/prime video|amazon prime/i,'Prime Video','#00a8e1'], [/disney\s?(\+|plus)/i,'Disney+','#113ccf'],
   [/hbo max|\bmax\b|\bhbo\b/i,'Max','#5b2bd8'], [/apple tv/i,'Apple TV+','#555'], [/paramount/i,'Paramount+','#0064ff'],
@@ -356,7 +363,7 @@ async function rss(f){
   });
 }
 const ago=d=>{const m=Math.max(0,Math.round((Date.now()-d)/6e4));return m<60?`${m} min`:m<1440?`${Math.round(m/60)} h`:`${Math.round(m/1440)} d`};
-const card=(n,isNew)=>`<a class="card nc${isNew?' new':''}" data-u="${esc(n.link)}"><div class="mute"><span class="k">${esc(n.cat)}</span> · ${esc(n.src)} · hace ${ago(n.date)}</div><div class="t">${n.pf?`<span class="pf" style="background:${n.pf[1]}">${esc(n.pf[0])}</span>`:''}${esc(n.title)}</div></a>`;
+const card=(n,isNew)=>`<a class="card nc${isNew?' new':''}" style="--c:${catColor(n.cat)}" data-u="${esc(n.link)}"><div class="mute"><span class="k">${esc(n.cat)}</span> · ${esc(n.src)} · hace ${ago(n.date)}</div><div class="t">${n.pf?`<span class="pf" style="background:${n.pf[1]}">${esc(n.pf[0])}</span>`:''}${esc(n.title)}</div></a>`;
 const atBottom = () => { const f=$('#feed'); return f.scrollHeight-f.scrollTop-f.clientHeight < 8; };
 function toBottom(smooth=true){ const f=$('#feed'); f.style.scrollBehavior=smooth?'':'auto'; f.scrollTop=f.scrollHeight; f.style.scrollBehavior=''; arrows(); }
 function arrows(){ const f=$('#feed'); $('#up').classList.toggle('on', f.scrollTop>4); $('#down').classList.toggle('on', !atBottom()); }
@@ -403,7 +410,7 @@ function applyHidden(){
   $('#cardChips').innerHTML=names.map(n=>`<button class="chip ${hidden.includes(n)?'':'on'}" data-t="${esc(n)}">${esc(n)}</button>`).join('');
 }
 function renderSources(){
-  $('#srcList').innerHTML = feedsCfg.length ? feedsCfg.map((f,i)=>`<div class="src"><span class="grow"><b>${esc(f.cat)}</b> · ${esc(f.name)}</span><button class="x" data-rm="${i}" title="Quitar">✕</button></div>`).join('') : '<span class="mute">Sin fuentes</span>';
+  $('#srcList').innerHTML = feedsCfg.length ? feedsCfg.map((f,i)=>`<div class="src"><span class="grow"><i class="cdot" style="background:${catColor(f.cat)}"></i><b>${esc(f.cat)}</b> · ${esc(f.name)}</span><button class="x" data-rm="${i}" title="Quitar">✕</button></div>`).join('') : '<span class="mute">Sin fuentes</span>';
   $('#cats').innerHTML = cats().map(c=>`<option value="${esc(c)}">`).join('');
 }
 function saveFeeds(){ store.set('feeds',feedsCfg); renderSources(); applyHidden(); loadNews(true); }
