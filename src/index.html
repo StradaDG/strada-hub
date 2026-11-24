@@ -327,14 +327,36 @@ function setLock(on){
 }
 $('#bLock').onclick = () => setLock(!store.get('locked', false));
 
+/* Temperatura real medida: estación SMN más cercana (Argentina) → METAR del aeropuerto más cercano → modelo */
+async function observed(p){
+  const near = (lat,lon) => km(p,{lat:+lat,lon:+lon});
+  const smn = await getAny('https://ws.smn.gob.ar/map_items/weather');
+  if(Array.isArray(smn)){
+    const st = smn.filter(x=>x?.weather && x.weather.temp!=null && x.lat!=null)
+      .map(x=>({x, d:near(x.lat,x.lon)})).sort((a,b)=>a.d-b.d)[0];
+    if(st && st.d<40){ const w=st.x.weather;
+      return { temp:+w.temp, hum:w.humidity!=null?+w.humidity:null, st:(w.st!=null&&w.st!=='')?+w.st:null,
+               wind:w.wind_speed!=null?+w.wind_speed:null, desc:w.description||'', src:'SMN '+(st.x.name||''), time:null }; }
+  }
+  const b=[p.lat-.6,p.lon-.6,p.lat+.6,p.lon+.6].map(v=>v.toFixed(2)).join(',');
+  const m = await getAny('https://aviationweather.gov/api/data/metar?format=json&bbox='+b);
+  if(Array.isArray(m) && m.length){
+    const st = m.filter(x=>x.temp!=null).map(x=>({x,d:near(x.lat,x.lon)})).sort((a,b)=>a.d-b.d)[0];
+    if(st && st.d<40 && Date.now()-st.x.obsTime*1000 < 3*3600e3){ const x=st.x;
+      const hum = x.dewp!=null ? Math.round(100*Math.exp(17.625*x.dewp/(243.04+x.dewp))/Math.exp(17.625*x.temp/(243.04+x.temp))) : null;
+      return { temp:+x.temp, hum, st:null, wind:x.wspd!=null?Math.round(x.wspd*1.852):null, desc:'', src:'Aeropuerto '+(x.icaoId||''), time:x.obsTime*1000 }; }
+  }
+  return null;
+}
 const hm = s => s ? s.slice(11,16) : '—';
 async function weather(){
   if(!place) await locate();
   const nearCba = km(place,CBA) < 25;
-  const [d, fus, hn] = await Promise.all([
+  const [d, fus, hn, ob] = await Promise.all([
     getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&hourly=${VARS}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_hours=12&forecast_days=6`),
     nearCba ? getJSON(RM+'fusion.json?t='+Date.now()) : null,
-    nearCba ? getJSON(RM+'granizo.json?t='+Date.now()) : null ]);
+    nearCba ? getJSON(RM+'granizo.json?t='+Date.now()) : null,
+    observed(place).catch(()=>null) ]);
   if(!d){ $('#c-clima').innerHTML='<span class="mute">Sin conexión con el clima</span>'; return; }
   const c=d.current, H=d.hourly, D=d.daily, off=d.utc_offset_seconds*1000;
   // horas: lluvia y granizo (análisis propio; en Córdoba se usa la fusión de modelos de Rain Meter si está al día)
@@ -352,9 +374,12 @@ async function weather(){
   const barrios = hn && hn.date===today && hn.barrios?.length ? `<span class="hn">🧊 Hoy: ${hn.barrios.map(b=>esc(b.name)).join(', ')}</span>` : '';
   const days = D.time.slice(1,6).map((t,j)=>{const k=j+1;
     return `<div title="${D.precipitation_probability_max[k]}% lluvia"><span class="mute">${esc(new Date(t+'T12:00').toLocaleDateString('es-AR',{weekday:'short'}).slice(0,3))}</span>${icon(D.weather_code[k],'')}<b>${Math.round(D.temperature_2m_max[k])}°</b><span class="mute">${Math.round(D.temperature_2m_min[k])}°</span></div>`}).join('');
-  $('#c-clima').innerHTML=`<div class="now">${icon(c.weather_code)}<div class="temp">${Math.round(c.temperature_2m)}°</div>
-      <div class="grow"><b>${esc(WX[c.weather_code]||'—')}</b><div class="mute">ST ${Math.round(c.apparent_temperature)}° · Hum ${c.relative_humidity_2m}% · ${Math.round(c.wind_speed_10m)} km/h</div></div>
-      <div class="mute" style="text-align:right">↑ ${Math.round(D.temperature_2m_max[0])}°<br>↓ ${Math.round(D.temperature_2m_min[0])}°</div></div>
+  const T0 = ob?.temp ?? c.temperature_2m, HU = ob?.hum ?? c.relative_humidity_2m, WI = ob?.wind ?? c.wind_speed_10m, ST = ob?.st ?? c.apparent_temperature;
+  const when = new Date(ob?.time || Date.now()).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  const srcTxt = ob ? `${esc(ob.src.trim())} · ${when}` : `modelo · ${when}`;
+  $('#c-clima').innerHTML=`<div class="now">${icon(c.weather_code)}<div class="temp">${Math.round(T0)}°</div>
+      <div class="grow"><b>${esc(ob?.desc||WX[c.weather_code]||'—')}</b><div class="mute">ST ${Math.round(ST)}° · Hum ${HU??'—'}% · ${WI!=null?Math.round(WI):'—'} km/h</div><div class="mute" style="font-size:9.5px;opacity:.8">${srcTxt}</div></div>
+      <div class="mute" style="text-align:right">↑ ${Math.round(Math.max(D.temperature_2m_max[0],T0))}°<br>↓ ${Math.round(D.temperature_2m_min[0])}°</div></div>
     <div class="st"><span class="tag ${lv?'l'+lv:''}">${esc(msg)}</span>${fusH.length?'<span class="mute">fusión de modelos</span>':''}${barrios}</div>
     <div class="strip"><span>Lluvia <b>${maxR}%</b></span><div class="cells">${hrs.map(h=>`<i class="${h.rl?'r'+h.rl:''}" title="${hm(h.t)} · ${h.pp}%"></i>`).join('')}</div>
       <span>Granizo <b>${maxH}%</b></span><div class="cells">${hrs.map(h=>`<i class="${h.hl?'h'+h.hl:''}" title="${hm(h.t)} · índice ${h.hs}"></i>`).join('')}</div>
