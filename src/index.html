@@ -187,6 +187,7 @@ const store = { get:(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d
 const open = url => T?.opener ? T.opener.openUrl(url) : window.open(url,'_blank');
 
 let feedsCfg = store.get('feeds', DEFAULT_FEEDS);
+feedsCfg = feedsCfg.filter((f,i,a)=>a.findIndex(g=>g.url===f.url)===i);
 if(store.get('feedsVer',1) < 2){   // suma las fuentes nuevas y conserva las que agregó el usuario
   feedsCfg = DEFAULT_FEEDS.concat(feedsCfg.filter(f=>!OLD_DEFAULT_URLS.includes(f.url)));
   store.set('feeds',feedsCfg); store.set('feedsVer',2);
@@ -371,19 +372,31 @@ function render(newOnes=new Set()){
   const vis = items.filter(n=>!hidden.includes(n.cat));
   $('#feed').innerHTML = vis.length ? vis.map(n=>card(n,newOnes.has(n.link))).join('') : '<div class="card nc"><span class="mute">Sin noticias todavía</span></div>';
 }
+// clave para detectar la misma noticia aunque venga de otra fuente o con otro link
+const keyOf = n => n.title.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim().slice(0,70);
+let loading = false;
 async function loadNews(reset=false){
-  if(reset){ items=[]; seen.clear(); }
-  const got=(await Promise.all(feedsCfg.map(f=>rss(f).catch(()=>[])))).flat();
-  const fresh=got.filter(n=>n.link&&!seen.has(n.link));
-  if(!fresh.length && !reset) return;
-  const first = items.length===0;
-  fresh.forEach(n=>seen.add(n.link));
-  const wasBottom = atBottom();
-  items = items.concat(fresh).sort((a,b)=>a.date-b.date).slice(-KEEP);
-  render(first ? new Set() : new Set(fresh.map(n=>n.link)));
-  if(first || wasBottom) toBottom(!first);
-  else $('#down').innerHTML='▼<span class="dot"></span>';      // hay nuevas abajo
-  arrows();
+  if(loading) return;                       // evita dos cargas al mismo tiempo
+  loading = true;
+  try{
+    if(reset){ items=[]; seen.clear(); }
+    const got=(await Promise.all(feedsCfg.map(f=>rss(f).catch(()=>[])))).flat();
+    const fresh=[];
+    for(const n of got){
+      if(!n.link||!n.title) continue;
+      const k=keyOf(n);
+      if(seen.has(n.link)||seen.has(k)) continue;
+      seen.add(n.link); seen.add(k); fresh.push(n);
+    }
+    if(!fresh.length && !reset) return;
+    const first = items.length===0;
+    const wasBottom = atBottom();
+    items = items.concat(fresh).sort((a,b)=>a.date-b.date).slice(-KEEP);
+    render(first ? new Set() : new Set(fresh.map(n=>n.link)));
+    if(first || wasBottom) toBottom(!first);
+    else $('#down').innerHTML='▼<span class="dot"></span>';
+    arrows();
+  } finally { loading = false; }
 }
 const step = () => { const c=$('#feed .nc'); return c ? c.offsetHeight + 7 : 71; };
 let pauseUntil = 0, endWait = 0;
@@ -413,7 +426,7 @@ function renderSources(){
   $('#srcList').innerHTML = feedsCfg.length ? feedsCfg.map((f,i)=>`<div class="src"><span class="grow"><i class="cdot" style="background:${catColor(f.cat)}"></i><b>${esc(f.cat)}</b> · ${esc(f.name)}</span><button class="x" data-rm="${i}" title="Quitar">✕</button></div>`).join('') : '<span class="mute">Sin fuentes</span>';
   $('#cats').innerHTML = cats().map(c=>`<option value="${esc(c)}">`).join('');
 }
-function saveFeeds(){ store.set('feeds',feedsCfg); renderSources(); applyHidden(); loadNews(true); }
+function saveFeeds(){ store.set('feeds',feedsCfg); renderSources(); applyHidden(); loading=false; loadNews(true); }
 $('#aBtn').onclick = async () => {
   const f={cat:$('#aCat').value.trim(), name:$('#aName').value.trim(), url:$('#aUrl').value.trim()};
   $('#aErr').textContent='';
