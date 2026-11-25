@@ -117,7 +117,16 @@ body.light .nc::before{filter:brightness(.8) saturate(1.3)}
 @keyframes up{from{transform:translateY(-30px);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.nc.new{animation:none}#feed{scroll-behavior:auto}}
 /* opciones */
-.set{flex-direction:column;align-items:stretch;gap:8px;background:var(--panel)}
+.set{flex-direction:column;align-items:stretch;gap:8px;background:var(--panel);max-height:430px;overflow-y:auto;overscroll-behavior:contain;padding-right:6px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.35) transparent}
+/* barra de desplazamiento propia: finita, translúcida, se ilumina al usarla */
+.set::-webkit-scrollbar{width:6px}
+.set::-webkit-scrollbar-track{background:transparent;margin:10px 0}
+.set::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28);border-radius:6px}
+.set::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.6)}
+body.light .set{scrollbar-color:rgba(0,0,0,.3) transparent}
+body.light .set::-webkit-scrollbar-thumb{background:rgba(0,0,0,.22)}
+body.light .set::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.45)}
+.set>*{flex:none}
 .set h3{margin:4px 0 0;font-size:11px;color:var(--mute);font-weight:600;display:flex;justify-content:space-between}
 .set input[type=text],.set input:not([type]){width:100%;background:var(--soft);border:1px solid var(--edge);border-radius:8px;color:var(--ink);padding:6px 8px;font:12px Inter,sans-serif;user-select:text;-webkit-user-select:text}
 input[type=range]{width:100%;accent-color:var(--acc)}
@@ -272,7 +281,9 @@ if(T?.window){
 }
 
 // ventana: ancho fijo, alto según tarjetas
-const fit = () => { if(!T?.window) return; const h=Math.ceil($('#hub').getBoundingClientRect().height);
+let maxH = 4000;
+if(T?.window) T.window.currentMonitor().then(m=>{ if(m) maxH=Math.floor(m.size.height/m.scaleFactor)-40; }).catch(()=>{});
+const fit = () => { if(!T?.window) return; const h=Math.min(maxH, Math.ceil($('#hub').getBoundingClientRect().height));
   T.window.getCurrentWindow().setSize(new T.dpi.LogicalSize(WIDTH, h)).catch(()=>{}); };
 new ResizeObserver(fit).observe($('#hub'));
 
@@ -646,7 +657,7 @@ $('#aBtn').onclick = async () => {
 $('#bReset').onclick = () => { feedsCfg = DEFAULT_FEEDS.slice(); saveFeeds(); };
 const closeApp = () => T?.window ? T.window.getCurrentWindow().close() : window.close();
 $('#bX').onclick = closeApp;
-$('#bCfg').onclick = () => { $('#cfg').hidden = !$('#cfg').hidden; };
+$('#bCfg').onclick = () => { $('#cfg').hidden = !$('#cfg').hidden; $('#cfg').scrollTop = 0; };
 
 document.addEventListener('click',e=>{
   if(e.target.closest('#brand')){ open('https://www.instagram.com/hugo_strada/'); return; }
