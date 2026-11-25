@@ -1,7 +1,7 @@
 {
   "name": "strada-hub",
   "private": true,
-  "version": "0.12.3",
+  "version": "0.13.0",
   "type": "module",
   "scripts": {
     "tauri": "tauri"

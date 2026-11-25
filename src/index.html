@@ -105,7 +105,14 @@ body.light .brand:hover .mark{filter:drop-shadow(0 0 6px rgba(0,0,0,.25))}
 .arrow .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--acc);margin-left:5px;vertical-align:middle}
 #feed{height:calc(var(--n) * var(--nh) + (var(--n) - 1) * var(--gap));overflow-y:auto;scroll-behavior:smooth;scrollbar-width:none;display:flex;flex-direction:column;gap:var(--gap)}
 #feed::-webkit-scrollbar{display:none}
-.nc{height:var(--nh);min-height:var(--nh);flex:none;cursor:pointer;display:block;padding:8px 12px}
+.nc{height:auto;min-height:var(--nh);max-height:var(--nh);flex:none;cursor:pointer;display:block;padding:8px 12px;transition:max-height .45s cubic-bezier(.2,.8,.2,1),background .3s}
+.nc .d{display:none;font-size:11.5px;color:var(--mute);margin-top:5px;line-height:1.4}
+/* previsualización: a los 2 s con el mouse encima, la tarjeta se abre y muestra el título completo */
+.nc.open{max-height:320px;background:rgba(22,26,38,calc(var(--a) + .25))}
+body.light .nc.open{background:rgba(255,255,255,calc(var(--a) + .3))}
+.nc.open .t{-webkit-line-clamp:unset;display:block}
+.nc.open .d{display:block}
+.nc.open .mute{white-space:normal}
 .nc{overflow:hidden}
 .nc .mute{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nc .t{font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:1px;line-height:1.3}
@@ -566,6 +573,15 @@ $('#c-dep').addEventListener('mouseleave',()=>TK.hover=false);
 let items = [];                 // ordenadas de vieja a nueva
 const seen = new Set();
 const cats = () => [...new Set(feedsCfg.map(f=>f.cat))];
+// resumen corto de la noticia (sin HTML); se descarta si solo repite el título
+function cleanDesc(html,title){
+  if(!html) return '';
+  let t=new DOMParser().parseFromString(String(html),'text/html').body.textContent||'';
+  t=t.replace(/\s+/g,' ').trim();
+  const k=x=>x.toLowerCase().replace(/[^a-z0-9áéíóúñ]+/g,'');
+  if(!t || k(t).startsWith(k(title).slice(0,40))) return '';
+  return t.length>260 ? t.slice(0,257).replace(/\s\S*$/,'')+'…' : t;
+}
 // En la app: lectura directa del RSS (sin límites). En el navegador: vía rss2json.
 async function rss(f){
   let list=[];
@@ -577,21 +593,22 @@ async function rss(f){
     if(!nodes.length) throw new Error('feed');
     const tx=(n,sel)=>n.querySelector(sel)?.textContent?.trim()||'';
     list=nodes.map(n=>({title:tx(n,'title'), link:tx(n,'link')||n.querySelector('link')?.getAttribute('href')||'',
-      date:Date.parse(tx(n,'pubDate')||tx(n,'published')||tx(n,'updated'))||Date.now(), source:tx(n,'source')}));
+      date:Date.parse(tx(n,'pubDate')||tx(n,'published')||tx(n,'updated'))||Date.now(), source:tx(n,'source'),
+      desc:tx(n,'description')||tx(n,'summary')||tx(n,'content')}));
   }else{
     const d=await (await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(f.url))).json();
     if(d.status!=='ok') throw new Error('feed');
-    list=d.items.map(i=>({title:i.title,link:i.link,date:Date.parse(String(i.pubDate).replace(' ','T')+'Z')||Date.now(),source:''}));
+    list=d.items.map(i=>({title:i.title,link:i.link,date:Date.parse(String(i.pubDate).replace(' ','T')+'Z')||Date.now(),source:'',desc:i.description||''}));
   }
   return list.sort((a,b)=>b.date-a.date).slice(0,PER_FEED).map(i=>{
     let title=i.title, src=f.name;
     if(/news\.google\./.test(f.url)){ const m=title.match(/^(.*) - ([^-]+)$/); if(m){ title=m[1]; src=m[2].split(/\s[|–—]\s/)[0].trim(); } else if(i.source) src=i.source; }
     const pf = f.cat==='Series' ? PLATFORMS.find(p=>p[0].test(title)) : null;
-    return {cat:f.cat, src, title, link:i.link, date:i.date, pf: pf?[pf[1],pf[2]]:null};
+    return {cat:f.cat, src, title, link:i.link, date:i.date, pf: pf?[pf[1],pf[2]]:null, desc:cleanDesc(i.desc,title)};
   });
 }
 const ago=d=>{const m=Math.max(0,Math.round((Date.now()-d)/6e4));return m<60?`${m} min`:m<1440?`${Math.round(m/60)} h`:`${Math.round(m/1440)} d`};
-const card=(n,isNew)=>`<a class="card nc${isNew?' new':''}" style="--c:${catColor(n.cat)}" data-u="${esc(n.link)}"><div class="mute"><span class="k">${esc(n.cat)}</span> · ${esc(n.src)} · hace ${ago(n.date)}</div><div class="t">${n.pf?`<span class="pf" style="background:${n.pf[1]}">${esc(n.pf[0])}</span>`:''}${esc(n.title)}</div></a>`;
+const card=(n,isNew)=>`<a class="card nc${isNew?' new':''}" style="--c:${catColor(n.cat)}" data-u="${esc(n.link)}"><div class="mute"><span class="k">${esc(n.cat)}</span> · ${esc(n.src)} · hace ${ago(n.date)}</div><div class="t">${n.pf?`<span class="pf" style="background:${n.pf[1]}">${esc(n.pf[0])}</span>`:''}${esc(n.title)}</div>${n.desc?`<div class="d">${esc(n.desc)}</div>`:''}</a>`;
 const atTop = () => $('#feed').scrollTop < 6;
 const atEnd = () => { const f=$('#feed'); return f.scrollHeight-f.scrollTop-f.clientHeight < 8; };
 function toTop(smooth=true){ const f=$('#feed'); f.style.scrollBehavior=smooth?'':'auto'; f.scrollTop=0; f.style.scrollBehavior=''; $('#up').textContent='▲'; arrows(); }
@@ -634,6 +651,13 @@ $('#up').onclick = () => { touch(); $('#feed').scrollBy({top:-step()}); };
 $('#down').onclick = () => { touch(); $('#feed').scrollBy({top:step()}); };
 $('#feed').addEventListener('scroll', () => { arrows(); if(atTop()) $('#up').textContent='▲'; });
 $('#feed').addEventListener('wheel', touch, {passive:true});
+let hovT=null, hovEl=null;
+$('#feed').addEventListener('mouseover', e => {
+  const c=e.target.closest('.nc'); if(c===hovEl) return;
+  clearTimeout(hovT); hovEl?.classList.remove('open'); hovEl=c;
+  if(c) hovT=setTimeout(()=>{ c.classList.add('open'); touch(); setTimeout(()=>c.scrollIntoView({block:'nearest',behavior:'smooth'}),460); }, 2000);
+});
+$('#feed').addEventListener('mouseleave', () => { clearTimeout(hovT); hovEl?.classList.remove('open'); hovEl=null; });
 $('#feed').addEventListener('mousemove', touch);
 setInterval(() => { if(!atTop() && Date.now() > idleUntil) toTop(); }, 2e3);
 
