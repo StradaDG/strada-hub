@@ -34,9 +34,13 @@ body.light .brand .mark::after{background:#111}
 .brand:hover .mark::after{opacity:1}
 .brand:hover .mark{filter:drop-shadow(0 0 7px rgba(255,255,255,.75))}
 body.light .brand:hover .mark{filter:drop-shadow(0 0 6px rgba(0,0,0,.25))}
-.top .date{font-size:13px;font-weight:600;white-space:nowrap}
+.top{flex-wrap:wrap;row-gap:8px;padding:9px 8px 10px 10px}
+.top .date{font-size:14px;font-weight:600;white-space:nowrap}
+.fer{flex-basis:100%;border-top:1px solid var(--soft);padding-top:8px;display:flex;flex-direction:column;gap:1px}
+.fer b{font-size:17px;font-weight:800;letter-spacing:-.2px;line-height:1.15}
+.fer .mute{font-size:11px}
 .top #city{font-size:11px}
-.hour{font-size:26px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.5px;margin-right:4px}
+.hour{font-size:30px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.5px;margin-right:4px}
 .acts{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
 .act{background:var(--soft);border:1px solid var(--edge);color:var(--ink);border-radius:9px;padding:7px 4px;font:600 11.5px Inter,sans-serif;cursor:pointer;text-shadow:none}
 .act:hover{background:var(--soft2)}
@@ -169,6 +173,7 @@ body.light .hn{color:#6b4fd8}
     <div class="grow" data-tauri-drag-region><div class="date" id="date" data-tauri-drag-region></div><div class="mute" id="city" data-tauri-drag-region>Ubicando…</div></div>
     <div class="hour" id="clock" data-tauri-drag-region></div>
     <button class="ic" id="bCfg" title="Opciones">⚙</button>
+    <div class="fer" id="fer" data-tauri-drag-region><b id="ferN" data-tauri-drag-region>Buscando próximo feriado…</b><span class="mute" id="ferD" data-tauri-drag-region></span></div>
   </div>
 
   <div class="card set" id="cfg" hidden>
@@ -392,7 +397,7 @@ function setLock(on){
   $('#bLock').classList.toggle('on', on);
   $('#bLock').textContent = on ? '📌 Anclado' : '📌 Anclar';
   $('.top').classList.toggle('locked', on);
-  document.querySelectorAll('.top, .top .grow, .top .date, #city, #clock').forEach(el => on ? el.removeAttribute('data-tauri-drag-region') : el.setAttribute('data-tauri-drag-region',''));
+  document.querySelectorAll('.top, .top .grow, .top .date, #city, #clock, #fer, #ferN, #ferD').forEach(el => on ? el.removeAttribute('data-tauri-drag-region') : el.setAttribute('data-tauri-drag-region',''));
 }
 $('#bLock').onclick = () => setLock(!store.get('locked', false));
 
@@ -474,6 +479,35 @@ async function dolar(){
   const d=await getJSON('https://dolarapi.com/v1/dolares');
   $('#c-dolar').innerHTML = d ? `<span class="mute side">US$</span><div class="cols">${Object.entries(DOLARES).map(([k,n])=>`<div><span class="mute">${n}</span><b>${money(d.find(y=>y.casa===k)?.venta)}</b></div>`).join('')}</div>`
     : '<span class="mute">Sin conexión con DolarApi</span>';
+}
+
+/* ===== Próximo feriado (Argentina + locales de Córdoba Capital) ===== */
+const CBA_LOCAL = [{md:'07-06', nombre:'Fundación de la Ciudad de Córdoba', tipo:'local (Córdoba Capital)'}];
+const TIPO = {inamovible:'Feriado inamovible', trasladable:'Feriado trasladable', puente:'Día no laborable (puente turístico)', 'no laborable':'Día no laborable'};
+async function feriadosYear(y){
+  const k='fer:'+y, c=store.get(k,null); if(c && Date.now()-c.t < 7*864e5) return c.list;
+  let list=null;
+  const a=await getAny(`https://api.argentinadatos.com/v1/feriados/${y}`);
+  if(Array.isArray(a)&&a.length) list=a.map(f=>({fecha:f.fecha, nombre:f.nombre, tipo:TIPO[f.tipo]||'Feriado'}));
+  if(!list){ const n=await getAny(`https://date.nager.at/api/v3/PublicHolidays/${y}/AR`);
+    if(Array.isArray(n)&&n.length) list=n.map(f=>({fecha:f.date, nombre:f.localName, tipo:'Feriado nacional'})); }
+  if(list) store.set(k,{t:Date.now(),list});
+  return list || c?.list || [];
+}
+async function feriado(){
+  const now=new Date(), y=now.getFullYear();
+  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  let all=(await feriadosYear(y)).concat(await feriadosYear(y+1));
+  if(!place || km(place,CBA)<40) for(const yy of [y,y+1]) for(const l of CBA_LOCAL) all.push({fecha:`${yy}-${l.md}`, nombre:l.nombre, tipo:'Feriado '+l.tipo});
+  const up=all.map(f=>({...f, d:new Date(f.fecha+'T00:00')})).filter(f=>f.d>=today).sort((a,b)=>a.d-b.d);
+  const f=up[0];
+  if(!f){ $('#ferN').textContent='Sin datos de feriados'; $('#ferD').textContent=''; return; }
+  const days=Math.round((f.d-today)/864e5);
+  $('#ferN').textContent = days===0 ? '¡HOY ES FERIADO!' : days===1 ? 'MAÑANA ES FERIADO' : `${days} DÍAS PARA EL PRÓXIMO FERIADO`;
+  const fd=f.d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+  const extra = /inamovible|trasladable|nacional/i.test(f.tipo) ? '' : ` (${f.tipo.replace(/^Feriado /,'')})`;
+  $('#ferD').textContent = `${fd.charAt(0).toUpperCase()+fd.slice(1)} · ${f.nombre}${extra}`;
+  $('#fer').title = f.tipo;
 }
 
 /* ===== Resultados deportivos ===== */
@@ -717,8 +751,8 @@ $('#bRef').onclick=()=>{place=null;weather();dolar();loadNews();sports()};
 setAlpha($('#alpha').value); setN($('#nVis').value); setTheme(store.get('theme','dark')); setLock(store.get('locked',false));
 renderSources(); applyHidden();
 tick(); setInterval(tick,30e3);
-weather(); dolar(); loadNews().then(sports);
-setInterval(()=>{weather();dolar();sports()}, WX_MIN*6e4);
+weather(); dolar(); loadNews().then(sports); feriado();
+setInterval(()=>{weather();dolar();sports();feriado()}, WX_MIN*6e4);
 setInterval(loadNews, NEWS_MIN*6e4);
 }
 </script>
