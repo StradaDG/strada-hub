@@ -86,8 +86,9 @@ body.light .brand:hover .mark{filter:drop-shadow(0 0 6px rgba(0,0,0,.25))}
 .days b{font-size:11px;line-height:1.1}
 /* resultados */
 .sp{padding:0 2px;min-height:40px;gap:0}
-.sp .vp{flex:1;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
-.sp .rail{display:flex;width:max-content;will-change:transform}
+.sp .vp{flex:1;overflow:hidden;position:relative}
+.sp .rail{display:flex;width:max-content;transition:transform .7s cubic-bezier(.3,.7,.2,1)}
+.sp .rail.jump{transition:none}
 .sp .nav2{background:none;border:0;color:var(--mute);cursor:pointer;font-size:15px;width:22px;height:38px;padding:0;flex:none}
 .sp .nav2:hover{color:var(--ink)}
 .sp .tile{display:flex;align-items:center;gap:6px;padding:11px 14px;white-space:nowrap;cursor:default;border-right:1px solid var(--soft)}
@@ -587,32 +588,32 @@ async function sports(){
   spRes=await Promise.all(SPORTS.map(s=>s.fn().catch(()=>null)));
   const row=SPORTS.map((s,i)=>tile(s,spRes[i])).join('');
   $('#c-dep').innerHTML=`<button class="nav2" data-tk="-1" title="Anterior">‹</button><div class="vp"><div class="rail" id="rail">${row}${row}</div></div><button class="nav2" data-tk="1" title="Siguiente">›</button>`;
+  TK.i=((TK.i%SPORTS.length)+SPORTS.length)%SPORTS.length; requestAnimationFrame(()=>tkApply(false));
 }
 // NBA: rota entre los partidos de la fecha
-setInterval(()=>{ if(nbaGames.length>1){ nbaI=(nbaI+1)%nbaGames.length; spRes[1]=nbaGames[nbaI]; document.querySelectorAll('#c-dep .tile:nth-child(7n+2)').forEach(el=>el.outerHTML=tile(SPORTS[1],spRes[1])); } }, 5e3);
+setInterval(()=>{ if(nbaGames.length>1){ nbaI=(nbaI+1)%nbaGames.length; spRes[1]=nbaGames[nbaI]; document.querySelectorAll('#rail .tile:nth-child(7n+2)').forEach(el=>{ const t=document.createElement('div'); t.innerHTML=tile(SPORTS[1],spRes[1]); el.innerHTML=t.firstElementChild.innerHTML; }); } }, 5e3);
 
-// cinta de resultados: se mueve sola a la derecha; con ‹ › se mueve a mano y a los 20 s vuelve a andar sola
-const TK = { x:0, target:null, idle:0, hover:false, speed:22 };   // px por segundo
-function tkFrame(t){
-  const r=$('#rail'); const dt=Math.min(.1,(t-(TK.t||t))/1000); TK.t=t;
-  if(r){
-    const W=r.scrollWidth/2;
-    if(W>0){
-      if(TK.target!=null){ TK.x += (TK.target-TK.x)*Math.min(1,dt*10); if(Math.abs(TK.target-TK.x)<.5){ TK.x=TK.target; } }
-      else if(!TK.hover && Date.now()>TK.idle) TK.x += TK.speed*dt;
-      if(Date.now()>TK.idle) TK.target=null;
-      while(TK.x>=0){ TK.x-=W; if(TK.target!=null) TK.target-=W; }
-      while(TK.x<-W){ TK.x+=W; if(TK.target!=null) TK.target+=W; }
-      r.style.transform=`translateX(${TK.x}px)`;
-    }
-  }
-  requestAnimationFrame(tkFrame);
+// cinta de resultados: avanza sola de a un resultado hacia la derecha cada 3 s (movimiento corto, sin rastros en la ventana transparente);
+// con ‹ › se mueve a mano y a los 20 s vuelve a andar sola
+const TK = { i:0, idle:0, hover:false };
+function tkApply(anim=true){
+  const r=$('#rail'); if(!r) return;
+  const tiles=[...r.querySelectorAll('.tile')], n=tiles.length/2; if(!n) return;
+  // posición: índice i dentro de la segunda copia, así siempre hay contenido a ambos lados
+  const x = -Math.round(tiles[n + TK.i].offsetLeft - 0);
+  r.classList.toggle('jump', !anim);
+  r.style.transform=`translate3d(${x}px,0,0)`;
 }
-requestAnimationFrame(tkFrame);
-function tkMove(dir){
-  const tile=$('#rail .tile'); const w=tile?tile.offsetWidth:110;
-  TK.target=(TK.target??TK.x) + dir*w; TK.idle=Date.now()+20e3;
+function tkStep(dir){
+  const r=$('#rail'); if(!r) return;
+  const n=r.querySelectorAll('.tile').length/2; if(!n) return;
+  TK.i -= dir;                                    // dir=+1 → el contenido se corre a la derecha
+  tkApply(true);
+  // al salir de rango se reubica sin animación en la copia equivalente
+  if(TK.i<=-n || TK.i>=n){ setTimeout(()=>{ TK.i=((TK.i%n)+n)%n; tkApply(false); }, 750); }
 }
+setInterval(()=>{ if(!TK.hover && Date.now()>TK.idle) tkStep(1); }, 3000);
+function tkMove(dir){ TK.idle=Date.now()+20e3; tkStep(dir); }
 $('#c-dep').addEventListener('mouseenter',()=>TK.hover=true);
 $('#c-dep').addEventListener('mouseleave',()=>TK.hover=false);
 
